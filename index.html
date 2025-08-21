@@ -193,10 +193,17 @@ function applyFilters() {
 }
 
 function buildSlices() {
-  state.slices = state.filtered.map((p, i) => ({
+  let items = [...state.filtered];
+  
+  // If odd number of playgrounds, remove one to maintain stripe pattern
+  if (items.length % 2 === 1 && items.length > 1) {
+    items = items.slice(0, -1);
+  }
+  
+  state.slices = items.map((p, i) => ({
     label: p.Name,
-    index: i,
-    color: i % 2 ? '#182132' : '#111a27',
+    index: state.filtered.indexOf(p), // keep original index for result lookup
+    color: i % 2 ? '#dc2626' : '#ffffff',
   }));
 }
 
@@ -233,12 +240,17 @@ function drawWheel() {
       const mid = (a0+a1)/2;
       ctx.save();
       ctx.rotate(mid);
-      ctx.translate(r*0.68, 0);
-      ctx.rotate(Math.PI/2);
-      ctx.fillStyle = '#cfe3ff';
-      ctx.font = `${12*DPR}px system-ui, -apple-system, Segoe UI, Roboto`;
+      ctx.translate(r*0.7, 0);
+      
+      // Text radiates outward from center - no additional rotation needed
+      // Text is already aligned with the spoke direction
+      
+      // Use contrasting text color based on slice color
+      ctx.fillStyle = s.color === '#ffffff' ? '#000000' : '#ffffff';
+      ctx.font = `bold ${12*DPR}px system-ui, -apple-system, Segoe UI, Roboto`;
       const text = s.label.length > 28 ? s.label.slice(0,27)+'…' : s.label;
       ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       ctx.fillText(text, 0, 0);
       ctx.restore();
     }
