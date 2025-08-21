@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NYC Playground Roulette</title>
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#121821; --ink:#e6f1ff; --muted:#9bb0c9; --accent:#4fd1c5; --accent2:#9f7aea;
+      --bad:#ff6b6b; --good:#38b000;
+    }
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:linear-gradient(180deg,#0b0f14,#0e131b 40%,#0b0f14);color:var(--ink);}
+    .wrap{max-width:1100px;margin:0 auto;padding:20px}
+    header{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    h1{font-size:clamp(20px,2.4vw,28px);margin:0;font-weight:800;letter-spacing:.2px}
+    .sub{color:var(--muted);font-size:14px}
+    .panel{background:var(--panel);border:1px solid #1f2733;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.35);}
+    .controls{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:12px;padding:14px}
+    .controls .field{display:flex;flex-direction:column;gap:6px}
+    label{font-size:12px;color:var(--muted)}
+    select,input[type="checkbox"]{background:#0e141d;border:1px solid #273143;color:var(--ink);padding:10px;border-radius:10px}
+    .row{display:grid;grid-template-columns:1fr 380px;gap:16px;margin-top:16px}
+    canvas{width:100%;height:auto;background:#0d131c;border-radius:16px;border:1px solid #1f2733}
+    .wheelbox{position:relative;display:grid;gap:12px;align-content:start}
+    .needle{position:absolute;right:-6px;top:50%;transform:translateY(-50%);border:10px solid transparent;border-left-color:var(--accent);filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}
+    .btns{display:flex;gap:10px;flex-wrap:wrap}
+    button{cursor:pointer;background:linear-gradient(180deg,var(--accent),#3bb4a9);color:#071019;border:0;border-radius:12px;padding:12px 16px;font-weight:700}
+    button.secondary{background:#192230;color:var(--ink);border:1px solid #2a3547}
+    .result{padding:16px;border-radius:12px;border:1px solid #223049;background:#0c121a}
+    .result h3{margin:.2em 0 .4em;font-size:18px}
+    .chip{display:inline-block;margin-right:6px;margin-top:6px;padding:6px 8px;border-radius:20px;background:#101825;border:1px solid #223049;color:var(--muted);font-size:12px}
+    .ok{color:#d9fcd9;border-color:#2e6b2e;background:#0d1a0d}
+    .no{color:#ffdede;border-color:#6b2e2e;background:#1a0d0d}
+    .count{color:var(--muted);font-size:12px}
+    .foot{margin-top:24px;color:var(--muted);font-size:12px}
+    @media (max-width: 980px){.row{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>NYC Playground Roulette</h1>
+        <div class="sub">Spin the wheel → get a playground.</div>
+      </div>
+      <div class="count" id="count">Loading…</div>
+    </header>
+
+    <section class="panel">
+      <div class="controls">
+        <div class="field">
+          <label for="borough">Borough</label>
+          <select id="borough">
+            <option value="All">All</option>
+            <option>Manhattan</option>
+            <option>Brooklyn</option>
+            <option>Queens</option>
+            <option>Bronx</option>
+            <option>Staten Island</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="accessible">Wheelchair Accessible</label>
+          <select id="accessible">
+            <option value="Any">Any</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="sensory">Sensory-Friendly</label>
+          <select id="sensory">
+            <option value="Any">Any</option>
+            <option value="Y">Y</option>
+            <option value="N">N</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="limit">Max slices (for readability)</label>
+          <select id="limit">
+            <option>12</option>
+            <option selected>24</option>
+            <option>36</option>
+            <option>60</option>
+            <option value="0">No limit</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <button id="apply" class="secondary">Apply Filters</button>
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <button id="spin">🎡 Spin</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="row">
+      <div class="wheelbox">
+        <div class="needle"></div>
+        <canvas id="wheel" width="800" height="800" aria-label="Spin wheel"></canvas>
+        <div class="btns">
+          <button id="spin2">Spin Again</button>
+          <button id="pick" class="secondary">Pick Truly Random</button>
+        </div>
+      </div>
+      <aside>
+        <div class="result" id="result">
+          <div class="sub">Result appears here after you spin ✨</div>
+        </div>
+      
+      </aside>
+    </div>
+  </div>
+
+<script>
+
+const state = {
+  all: [],
+  filtered: [],
+  slices: [],
+  spinning: false,
+  angle: 0,
+  spinStart: 0,
+  spinDuration: 2400, // ms
+  spinFrom: 0,
+  spinTo: 0
+};
+
+const qs = id => document.getElementById(id);
+const wheel = qs('wheel');
+const ctx = wheel.getContext('2d');
+const DPR = window.devicePixelRatio || 1;
+
+// scale canvas for crisp lines
+function scaleCanvas() {
+  const w = wheel.clientWidth * DPR;
+  const h = wheel.clientHeight * DPR;
+  wheel.width = w; wheel.height = h;
+}
+scaleCanvas();
+window.addEventListener('resize', scaleCanvas);
+
+function boroughFromPropId(propId) {
+  const map = {B:'Brooklyn', M:'Manhattan', Q:'Queens', X:'Bronx', R:'Staten Island'};
+  return map[(propId||'')[0]] || 'Unknown';
+}
+
+function normalizeLatLon(p) {
+  let lat = parseFloat(p.lat), lon = parseFloat(p.lon);
+  // Swap if obviously reversed (we expect lat ~ 40.x, lon ~ -73.x)
+  if (Math.abs(lat) > 90 || Math.abs(lon) < 90) { const t = lat; lat = lon; lon = t; }
+  return {lat, lon};
+}
+
+function friendlyAccess(v) {
+  const t = String(v||'').toLowerCase();
+  if (t.includes('yes') || t.includes('accessible')) return 'Yes';
+  if (t.includes('no') || t.includes('not')) return 'No';
+  if (t.includes('limited')) return 'Limited';
+  return v || 'Unknown';
+}
+
+function applyFilters() {
+  const bSel = qs('borough').value;
+  const accSel = qs('accessible').value; // Any | Yes | No
+  const sensSel = qs('sensory').value; // Any | Y | N
+  let items = [...state.all];
+  items = items.filter(p => {
+    const borough = boroughFromPropId(p.Prop_ID);
+    const access = friendlyAccess(p.Accessible);
+    const sens = (p['Sensory-Friendly']||'').toUpperCase();
+    if (bSel !== 'All' && borough !== bSel) return false;
+    if (accSel !== 'Any' && access !== accSel) return false;
+    if (sensSel !== 'Any' && sens !== sensSel) return false;
+    return true;
+  });
+
+  // Limit slices for readability
+  const lim = parseInt(qs('limit').value, 10);
+  if (lim && items.length > lim) {
+    // sample evenly across the list
+    const step = items.length / lim;
+    items = Array.from({length: lim}, (_, i) => items[Math.floor(i*step)]);
+  }
+
+  state.filtered = items;
+  qs('count').textContent = `${items.length} playgrounds match`;
+  buildSlices();
+  drawWheel();
+}
+
+function buildSlices() {
+  state.slices = state.filtered.map((p, i) => ({
+    label: p.Name,
+    index: i,
+    color: i % 2 ? '#182132' : '#111a27',
+  }));
+}
+
+function drawWheel() {
+  const {width, height} = wheel; // scaled by DPR
+  const cx = width/2, cy = height/2; const r = Math.min(cx, cy) - 16*DPR;
+  ctx.clearRect(0,0,width,height);
+  const n = Math.max(1, state.slices.length);
+  const step = Math.PI*2 / n;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(state.angle);
+  state.slices.forEach((s, i) => {
+    const a0 = i*step;
+    const a1 = a0 + step;
+    // slice
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.arc(0,0,r,a0,a1);
+    ctx.closePath();
+    ctx.fillStyle = s.color;
+    ctx.fill();
+
+    // radial divider
+    ctx.strokeStyle = '#243249';
+    ctx.lineWidth = 1*DPR;
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.lineTo(r*Math.cos(a1), r*Math.sin(a1));
+    ctx.stroke();
+
+    // label (only if enough room)
+    if (n <= 36) {
+      const mid = (a0+a1)/2;
+      ctx.save();
+      ctx.rotate(mid);
+      ctx.translate(r*0.68, 0);
+      ctx.rotate(Math.PI/2);
+      ctx.fillStyle = '#cfe3ff';
+      ctx.font = `${12*DPR}px system-ui, -apple-system, Segoe UI, Roboto`;
+      const text = s.label.length > 28 ? s.label.slice(0,27)+'…' : s.label;
+      ctx.textAlign = 'center';
+      ctx.fillText(text, 0, 0);
+      ctx.restore();
+    }
+  });
+  // hub
+  ctx.fillStyle = '#0b111a';
+  ctx.beginPath(); ctx.arc(0,0,r*0.2,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#2b3a51'; ctx.lineWidth = 2*DPR; ctx.stroke();
+  ctx.restore();
+}
+
+function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+
+function spin() {
+  if (state.spinning || state.slices.length === 0) return;
+  state.spinning = true;
+  state.spinStart = performance.now();
+  state.spinFrom = state.angle;
+  // spin 5–8 full rotations + land on random slice
+  const n = Math.max(1, state.slices.length);
+  const targetIndex = Math.floor(Math.random()*n);
+  const step = (Math.PI*2)/n;
+  const targetAngle = (Math.PI/2) - (targetIndex*step + step/2); // align target to needle (right side)
+  // normalize current angle to avoid huge numbers
+  const current = ((state.angle % (Math.PI*2)) + Math.PI*2)%(Math.PI*2);
+  const baseSpins = Math.PI*2 * (5 + Math.floor(Math.random()*3));
+  state.spinTo = current + baseSpins + targetAngle;
+
+  const animate = (now)=>{
+    const t = Math.min(1, (now - state.spinStart)/state.spinDuration);
+    const k = easeOutCubic(t);
+    state.angle = state.spinFrom + (state.spinTo - state.spinFrom)*k;
+    drawWheel();
+    if (t < 1) requestAnimationFrame(animate); else { state.spinning = false; selectByAngle(); }
+  };
+  requestAnimationFrame(animate);
+}
+
+function selectByAngle() {
+  const n = Math.max(1, state.slices.length);
+  const step = (Math.PI*2)/n;
+  // needle points to 0 radians to the right; convert angle to slice index
+  const a = ((-state.angle) % (Math.PI*2) + Math.PI*2)%(Math.PI*2);
+  const idx = Math.floor(a / step);
+  const s = state.slices[idx];
+  if (!s) return;
+  showResult(state.filtered[s.index]);
+}
+
+function pickRandom() {
+  if (state.filtered.length === 0) return;
+  const p = state.filtered[Math.floor(Math.random()*state.filtered.length)];
+  showResult(p);
+}
+
+function gmapLink(lat,lon,name) {
+  const q = encodeURIComponent(`${lat},${lon} (${name})`);
+  return `https://www.google.com/maps/search/?api=1&query=${q}`;
+}
+
+function showResult(p) {
+  const {lat, lon} = normalizeLatLon(p);
+  const borough = boroughFromPropId(p.Prop_ID);
+  const access = friendlyAccess(p.Accessible);
+  const sensory = (p['Sensory-Friendly']||'').toUpperCase();
+  const gm = gmapLink(lat,lon,p.Name);
+  qs('result').innerHTML = `
+    <div class="chip">${borough}</div>
+    <h3>${p.Name}</h3>
+    <div class="sub">${p.Location || ''}</div>
+    <p style="margin:.6em 0 1em;">
+      <a href="${gm}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">Open in Google Maps ↗</a>
+    </p>
+    <div>
+      <span class="chip ${access==='Yes'?'ok':'no'}">Accessible: ${access}</span>
+      <span class="chip ${sensory==='Y'?'ok':'no'}">Sensory-Friendly: ${sensory||'?'}</span>
+      <span class="chip">Playground ID: ${p.Playground_ID||p.Prop_ID}</span>
+    </div>
+  `;
+}
+
+async function load() {
+  try {
+    const res = await fetch('./DPR_Playgrounds_001.json');
+    const data = await res.json();
+    // basic normalization
+    state.all = data.map(p => ({...p})).filter(p => p && p.Name);
+    qs('count').textContent = `${state.all.length} total playgrounds`;
+    applyFilters();
+  } catch (e) {
+    qs('count').textContent = 'Could not load DPR_Playgrounds_001.json';
+    console.error(e);
+  }
+}
+
+// wire up UI
+qs('apply').addEventListener('click', applyFilters);
+qs('spin').addEventListener('click', spin);
+qs('spin2').addEventListener('click', spin);
+qs('pick').addEventListener('click', pickRandom);
+
+load();
+</script>
+</body>
+</html>
