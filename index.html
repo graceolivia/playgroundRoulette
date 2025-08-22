@@ -97,6 +97,40 @@
       </div>
     </section>
 
+    <section class="panel" style="margin-top: 16px;">
+      <div class="controls" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="field">
+          <label>Database Management</label>
+          <button id="addFavorite" class="secondary">❤️ Add to Favorites</button>
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <button id="viewFavorites" class="secondary">📋 View Favorites</button>
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <button id="exportData" class="secondary">💾 Export Data</button>
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <button id="showStats" class="secondary">📊 Show Stats</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top: 16px;">
+      <div class="controls" style="grid-template-columns: repeat(2, 1fr);">
+        <div class="field">
+          <label>Database Reset (if needed)</label>
+          <button id="resetDatabase" class="secondary" style="background: #6b2e2e; color: #ffdede;">🗑️ Reset Database</button>
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <button id="reloadData" class="secondary">🔄 Reload from JSON</button>
+        </div>
+      </div>
+    </section>
+
     <div class="row">
       <div class="wheelbox">
         <div class="needle"></div>
@@ -115,7 +149,8 @@
     </div>
   </div>
 
-<script>
+<script type="module">
+import playgroundDB from './db.js';
 
 const state = {
   all: [],
@@ -163,20 +198,18 @@ function friendlyAccess(v) {
   return v || 'Unknown';
 }
 
-function applyFilters() {
+async function applyFilters() {
   const bSel = qs('borough').value;
   const accSel = qs('accessible').value; // Any | Yes | No
   const sensSel = qs('sensory').value; // Any | Y | N
-  let items = [...state.all];
-  items = items.filter(p => {
-    const borough = boroughFromPropId(p.Prop_ID);
-    const access = friendlyAccess(p.Accessible);
-    const sens = (p['Sensory-Friendly']||'').toUpperCase();
-    if (bSel !== 'All' && borough !== bSel) return false;
-    if (accSel !== 'Any' && access !== accSel) return false;
-    if (sensSel !== 'Any' && sens !== sensSel) return false;
-    return true;
-  });
+  
+  // Use database filtering for better performance
+  const filters = {};
+  if (bSel !== 'All') filters.borough = bSel;
+  if (accSel !== 'Any') filters.accessible = accSel;
+  if (sensSel !== 'Any') filters.sensory = sensSel;
+  
+  let items = await playgroundDB.filterPlaygrounds(filters);
 
   // Limit slices for readability
   const lim = parseInt(qs('limit').value, 10);
@@ -317,6 +350,11 @@ function showResult(p) {
   const access = friendlyAccess(p.Accessible);
   const sensory = (p['Sensory-Friendly']||'').toUpperCase();
   const gm = gmapLink(lat,lon,p.Name);
+  
+  // Store current playground for favorites
+  currentPlayground = p;
+  updateFavoriteButton();
+  
   qs('result').innerHTML = `
     <div class="chip">${borough}</div>
     <h3>${p.Name}</h3>
@@ -334,23 +372,169 @@ function showResult(p) {
 
 async function load() {
   try {
-    const res = await fetch('./DPR_Playgrounds_001.json');
-    const data = await res.json();
-    // basic normalization
-    state.all = data.map(p => ({...p})).filter(p => p && p.Name);
+    // First, try to load from database
+    state.all = await playgroundDB.getAllPlaygrounds();
+    
+    // If database is empty, load from JSON and initialize database
+    if (state.all.length === 0) {
+      qs('count').textContent = 'Loading playground data...';
+      const res = await fetch('./DPR_Playgrounds_001.json');
+      const data = await res.json();
+      // basic normalization
+      const normalizedData = data.map(p => ({...p})).filter(p => p && p.Name);
+      
+      // Initialize database with JSON data
+      await playgroundDB.initialize(normalizedData);
+      state.all = await playgroundDB.getAllPlaygrounds();
+    }
+    
     qs('count').textContent = `${state.all.length} total playgrounds`;
-    applyFilters();
+    await applyFilters();
   } catch (e) {
-    qs('count').textContent = 'Could not load DPR_Playgrounds_001.json';
+    qs('count').textContent = 'Could not load playground data';
     console.error(e);
   }
 }
 
+// Database management functions
+let currentPlayground = null;
+
+async function addToFavorites() {
+  if (!currentPlayground) {
+    alert('Please spin the wheel first to select a playground!');
+    return;
+  }
+  
+  try {
+    const isAlreadyFavorite = await playgroundDB.isFavorite(currentPlayground.id);
+    if (isAlreadyFavorite) {
+      await playgroundDB.removeFromFavorites(currentPlayground.id);
+      alert(`${currentPlayground.Name} removed from favorites!`);
+    } else {
+      await playgroundDB.addToFavorites(currentPlayground.id);
+      alert(`${currentPlayground.Name} added to favorites!`);
+    }
+    
+    // Update button text
+    updateFavoriteButton();
+  } catch (e) {
+    console.error('Error managing favorites:', e);
+    alert('Error managing favorites');
+  }
+}
+
+async function updateFavoriteButton() {
+  if (currentPlayground) {
+    const isFav = await playgroundDB.isFavorite(currentPlayground.id);
+    qs('addFavorite').textContent = isFav ? '💔 Remove from Favorites' : '❤️ Add to Favorites';
+  }
+}
+
+async function viewFavorites() {
+  try {
+    const favorites = await playgroundDB.getFavorites();
+    if (favorites.length === 0) {
+      alert('No favorites yet! Spin the wheel and add some playgrounds to your favorites.');
+      return;
+    }
+    
+    const favoritesList = favorites.map(p => 
+      `• ${p.Name} (${boroughFromPropId(p.Prop_ID)})`
+    ).join('\n');
+    
+    alert(`Your Favorite Playgrounds (${favorites.length}):\n\n${favoritesList}`);
+  } catch (e) {
+    console.error('Error viewing favorites:', e);
+    alert('Error loading favorites');
+  }
+}
+
+async function exportData() {
+  try {
+    const data = await playgroundDB.exportToJSON();
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'playground_data_export.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    alert('Data exported successfully!');
+  } catch (e) {
+    console.error('Error exporting data:', e);
+    alert('Error exporting data');
+  }
+}
+
+async function showStats() {
+  try {
+    const stats = await playgroundDB.getStats();
+    const favorites = await playgroundDB.getFavorites();
+    
+    alert(`Playground Database Statistics:
+    
+📊 Total Playgrounds: ${stats.total}
+♿ Accessible: ${stats.accessible} (${stats.accessiblePercent}%)
+👶 Sensory-Friendly: ${stats.sensoryFriendly} (${stats.sensoryPercent}%)
+❤️ Your Favorites: ${favorites.length}
+
+Database stores all playground data locally for fast filtering and favorites management!`);
+  } catch (e) {
+    console.error('Error loading stats:', e);
+    alert('Error loading statistics');
+  }
+}
+
+async function resetDatabase() {
+  if (!confirm('⚠️ This will delete ALL playground data and favorites from your browser. Are you sure?')) {
+    return;
+  }
+  
+  try {
+    await playgroundDB.resetDatabase();
+    alert('✅ Database reset successfully! The page will reload to import fresh data.');
+    location.reload();
+  } catch (e) {
+    console.error('Error resetting database:', e);
+    alert('Error resetting database. Try refreshing the page.');
+  }
+}
+
+async function reloadData() {
+  try {
+    qs('count').textContent = 'Reloading playground data...';
+    const res = await fetch('./DPR_Playgrounds_001.json');
+    const data = await res.json();
+    const normalizedData = data.map(p => ({...p})).filter(p => p && p.Name);
+    
+    await playgroundDB.clearAll();
+    await playgroundDB.initialize(normalizedData);
+    state.all = await playgroundDB.getAllPlaygrounds();
+    
+    qs('count').textContent = `${state.all.length} total playgrounds`;
+    await applyFilters();
+    alert('✅ Data reloaded successfully from JSON!');
+  } catch (e) {
+    console.error('Error reloading data:', e);
+    alert('Error reloading data');
+  }
+}
+
 // wire up UI
-qs('apply').addEventListener('click', applyFilters);
+qs('apply').addEventListener('click', () => applyFilters());
 qs('spin').addEventListener('click', spin);
 qs('spin2').addEventListener('click', spin);
 qs('pick').addEventListener('click', pickRandom);
+
+// Wire up database management buttons
+qs('addFavorite').addEventListener('click', () => addToFavorites());
+qs('viewFavorites').addEventListener('click', () => viewFavorites());
+qs('exportData').addEventListener('click', () => exportData());
+qs('showStats').addEventListener('click', () => showStats());
+qs('resetDatabase').addEventListener('click', () => resetDatabase());
+qs('reloadData').addEventListener('click', () => reloadData());
 
 load();
 </script>

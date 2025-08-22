@@ -1,0 +1,16 @@
+{
+  "name": "nyc-playground-roulette",
+  "version": "1.0.0",
+  "description": "NYC Playground discovery app with database functionality",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "dev": "python -m http.server 8000"
+  },
+  "dependencies": {
+    "dexie": "^3.2.4"
+  },
+  "devDependencies": {},
+  "author": "",
+  "license": "MIT"
+}
