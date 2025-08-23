@@ -3,540 +3,621 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>NYC Playground Roulette</title>
+  <title>NYC Playground Explorer</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="./node_modules/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="./node_modules/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="./node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+  
   <style>
     :root{
       --bg:#0b0f14; --panel:#121821; --ink:#e6f1ff; --muted:#9bb0c9; --accent:#4fd1c5; --accent2:#9f7aea;
       --bad:#ff6b6b; --good:#38b000;
     }
-    html,body{height:100%}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:linear-gradient(180deg,#0b0f14,#0e131b 40%,#0b0f14);color:var(--ink);}
-    .wrap{max-width:1100px;margin:0 auto;padding:20px}
-    header{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-    h1{font-size:clamp(20px,2.4vw,28px);margin:0;font-weight:800;letter-spacing:.2px}
-    .sub{color:var(--muted);font-size:14px}
-    .panel{background:var(--panel);border:1px solid #1f2733;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.35);}
-    .controls{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:12px;padding:14px}
-    .controls .field{display:flex;flex-direction:column;gap:6px}
-    label{font-size:12px;color:var(--muted)}
-    select,input[type="checkbox"]{background:#0e141d;border:1px solid #273143;color:var(--ink);padding:10px;border-radius:10px}
-    .row{display:grid;grid-template-columns:1fr 380px;gap:16px;margin-top:16px}
-    canvas{width:100%;height:auto;background:#0d131c;border-radius:16px;border:1px solid #1f2733}
-    .wheelbox{position:relative;display:grid;gap:12px;align-content:start}
-    .needle{position:absolute;right:-6px;top:50%;transform:translateY(-50%);border:10px solid transparent;border-left-color:var(--accent);filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}
-    .btns{display:flex;gap:10px;flex-wrap:wrap}
-    button{cursor:pointer;background:linear-gradient(180deg,var(--accent),#3bb4a9);color:#071019;border:0;border-radius:12px;padding:12px 16px;font-weight:700}
+    html,body{height:100%; margin:0; padding:0;}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--ink);}
+    
+    /* Header */
+    .header{
+      background:var(--panel);
+      border-bottom:1px solid #1f2733;
+      padding:12px 20px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      gap:16px;
+      box-shadow:0 2px 10px rgba(0,0,0,.3);
+      z-index:1000;
+      position:relative;
+    }
+    
+    .header h1{
+      font-size:clamp(18px,2.2vw,24px);
+      margin:0;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+    
+    .controls{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    
+    .controls select{
+      background:#0e141d;
+      border:1px solid #273143;
+      color:var(--ink);
+      padding:8px 12px;
+      border-radius:8px;
+      font-size:14px;
+    }
+    
+    button{
+      cursor:pointer;
+      background:linear-gradient(180deg,var(--accent),#3bb4a9);
+      color:#071019;
+      border:0;
+      border-radius:8px;
+      padding:10px 16px;
+      font-weight:700;
+      font-size:14px;
+      transition:transform 0.1s;
+    }
+    
+    button:hover{transform:translateY(-1px);}
     button.secondary{background:#192230;color:var(--ink);border:1px solid #2a3547}
-    .result{padding:16px;border-radius:12px;border:1px solid #223049;background:#0c121a}
-    .result h3{margin:.2em 0 .4em;font-size:18px}
-    .chip{display:inline-block;margin-right:6px;margin-top:6px;padding:6px 8px;border-radius:20px;background:#101825;border:1px solid #223049;color:var(--muted);font-size:12px}
-    .ok{color:#d9fcd9;border-color:#2e6b2e;background:#0d1a0d}
-    .no{color:#ffdede;border-color:#6b2e2e;background:#1a0d0d}
-    .count{color:var(--muted);font-size:12px}
-    .foot{margin-top:24px;color:var(--muted);font-size:12px}
-    @media (max-width: 980px){.row{grid-template-columns:1fr}}
+    button.danger{background:#6b2e2e;color:#ffdede;}
+    
+    .count{color:var(--muted);font-size:14px;margin-left:auto;}
+    
+    /* Map Container */
+    .map-container{
+      height:calc(100vh - 80px);
+      position:relative;
+    }
+    
+    #map{
+      height:100%;
+      width:100%;
+    }
+    
+    /* Details Panel */
+    .details-panel{
+      position:absolute;
+      bottom:0;
+      left:0;
+      right:0;
+      background:var(--panel);
+      border-top:1px solid #1f2733;
+      border-radius:16px 16px 0 0;
+      box-shadow:0 -5px 20px rgba(0,0,0,.5);
+      transform:translateY(100%);
+      transition:transform 0.3s ease;
+      z-index:1000;
+      max-height:50vh;
+      overflow-y:auto;
+    }
+    
+    .details-panel.visible{
+      transform:translateY(0);
+    }
+    
+    .details-content{
+      padding:20px;
+    }
+    
+    .details-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      margin-bottom:16px;
+    }
+    
+    .close-details{
+      background:none;
+      border:none;
+      color:var(--muted);
+      font-size:24px;
+      padding:0;
+      cursor:pointer;
+      line-height:1;
+    }
+    
+    .playground-title{
+      font-size:20px;
+      font-weight:800;
+      margin:0 0 4px 0;
+    }
+    
+    .playground-location{
+      color:var(--muted);
+      margin:0 0 12px 0;
+    }
+    
+    .chip{
+      display:inline-block;
+      margin-right:6px;
+      margin-top:6px;
+      padding:6px 10px;
+      border-radius:12px;
+      background:#101825;
+      border:1px solid #223049;
+      color:var(--muted);
+      font-size:12px;
+    }
+    
+    .chip.ok{color:#d9fcd9;border-color:#2e6b2e;background:#0d1a0d}
+    .chip.no{color:#ffdede;border-color:#6b2e2e;background:#1a0d0d}
+    
+    .playground-actions{
+      margin-top:16px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    
+    /* Custom Leaflet Styles */
+    .leaflet-popup-content-wrapper{
+      background:var(--panel);
+      border:1px solid #1f2733;
+      border-radius:12px;
+      color:var(--ink);
+    }
+    
+    .leaflet-popup-content{
+      margin:12px;
+      color:var(--ink);
+    }
+    
+    .leaflet-popup-tip{
+      background:var(--panel);
+      border:1px solid #1f2733;
+    }
+    
+    .popup-title{
+      font-weight:700;
+      margin:0 0 8px 0;
+      font-size:16px;
+    }
+    
+    .popup-location{
+      color:var(--muted);
+      font-size:13px;
+      margin:0 0 8px 0;
+    }
+    
+    .popup-chips{
+      margin-top:8px;
+    }
+    
+    .popup-chips .chip{
+      font-size:10px;
+      padding:4px 6px;
+      margin:2px 4px 2px 0;
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px){
+      .header{
+        padding:10px 16px;
+      }
+      .controls{
+        width:100%;
+        justify-content:space-between;
+      }
+      .map-container{
+        height:calc(100vh - 70px);
+      }
+    }
+    
+    /* Loading indicator */
+    .loading{
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      color:var(--muted);
+      font-size:16px;
+      z-index:1001;
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div>
-        <h1>NYC Playground Roulette</h1>
-        <div class="sub">Spin the wheel → get a playground.</div>
-      </div>
-      <div class="count" id="count">Loading…</div>
-    </header>
-
-    <section class="panel">
-      <div class="controls">
-        <div class="field">
-          <label for="borough">Borough</label>
-          <select id="borough">
-            <option value="All">All</option>
-            <option>Manhattan</option>
-            <option>Brooklyn</option>
-            <option>Queens</option>
-            <option>Bronx</option>
-            <option>Staten Island</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="accessible">Wheelchair Accessible</label>
-          <select id="accessible">
-            <option value="Any">Any</option>
-            <option value="Yes">Yes</option>
-            <option value="No">No</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="sensory">Sensory-Friendly</label>
-          <select id="sensory">
-            <option value="Any">Any</option>
-            <option value="Y">Y</option>
-            <option value="N">N</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="limit">Max slices (for readability)</label>
-          <select id="limit">
-            <option>12</option>
-            <option selected>24</option>
-            <option>36</option>
-            <option>60</option>
-            <option value="0">No limit</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>&nbsp;</label>
-          <button id="apply" class="secondary">Apply Filters</button>
-        </div>
-        <div class="field">
-          <label>&nbsp;</label>
-          <button id="spin">🎡 Spin</button>
-        </div>
-      </div>
-    </section>
-
-    <section class="panel" style="margin-top: 16px;">
-      <div class="controls" style="grid-template-columns: repeat(4, 1fr);">
-        <div class="field">
-          <label>Database Management</label>
-          <button id="addFavorite" class="secondary">❤️ Add to Favorites</button>
-        </div>
-        <div class="field">
-          <label>&nbsp;</label>
-          <button id="viewFavorites" class="secondary">📋 View Favorites</button>
-        </div>
-        <div class="field">
-          <label>&nbsp;</label>
-          <button id="exportData" class="secondary">💾 Export Data</button>
-        </div>
-        <div class="field">
-          <label>&nbsp;</label>
-          <button id="showStats" class="secondary">📊 Show Stats</button>
-        </div>
-      </div>
-    </section>
-
-    <section class="panel" style="margin-top: 16px;">
-      <div class="controls" style="grid-template-columns: repeat(2, 1fr);">
-        <div class="field">
-          <label>Database Reset (if needed)</label>
-          <button id="resetDatabase" class="secondary" style="background: #6b2e2e; color: #ffdede;">🗑️ Reset Database</button>
-        </div>
-        <div class="field">
-          <label>&nbsp;</label>
-          <button id="reloadData" class="secondary">🔄 Reload from JSON</button>
-        </div>
-      </div>
-    </section>
-
-    <div class="row">
-      <div class="wheelbox">
-        <div class="needle"></div>
-        <canvas id="wheel" width="800" height="800" aria-label="Spin wheel"></canvas>
-        <div class="btns">
-          <button id="spin2">Spin Again</button>
-          <button id="pick" class="secondary">Pick Truly Random</button>
-        </div>
-      </div>
-      <aside>
-        <div class="result" id="result">
-          <div class="sub">Result appears here after you spin ✨</div>
-        </div>
+  <header class="header">
+    <div>
+      <h1>NYC Playground Explorer</h1>
+    </div>
+    
+    <div class="controls">
+      <select id="borough">
+        <option value="All">All Boroughs</option>
+        <option>Manhattan</option>
+        <option>Brooklyn</option>
+        <option>Queens</option>
+        <option>Bronx</option>
+        <option>Staten Island</option>
+      </select>
       
-      </aside>
+      <select id="accessible">
+        <option value="Any">Any Access</option>
+        <option value="Yes">Accessible</option>
+        <option value="Limited">Limited Access</option>
+        <option value="No">Not Accessible</option>
+      </select>
+      
+      <select id="sensory">
+        <option value="Any">Any Sensory</option>
+        <option value="Y">Sensory-Friendly</option>
+        <option value="N">Not Sensory-Friendly</option>
+      </select>
+      
+      <button id="applyFilters" class="secondary">Apply Filters</button>
+      <button id="pickRandom">🎲 Pick Random</button>
+      <button id="findMe" class="secondary">📍 Near Me</button>
+    </div>
+    
+    <div class="count" id="count">Loading...</div>
+  </header>
+
+  <div class="map-container">
+    <div id="map"></div>
+    <div class="loading" id="loading">Loading playground data...</div>
+    
+    <div class="details-panel" id="detailsPanel">
+      <div class="details-content" id="detailsContent">
+        <div class="details-header">
+          <div>
+            <h2 class="playground-title" id="detailsTitle">Select a playground</h2>
+            <p class="playground-location" id="detailsLocation">Click on a marker to see details</p>
+          </div>
+          <button class="close-details" id="closeDetails">×</button>
+        </div>
+        
+        <div id="detailsInfo">
+          <!-- Playground details will be populated here -->
+        </div>
+        
+        <div class="playground-actions" id="detailsActions">
+          <!-- Action buttons will be populated here -->
+        </div>
+      </div>
     </div>
   </div>
 
-<script type="module">
-import playgroundDB from './db.js';
-
-const state = {
-  all: [],
-  filtered: [],
-  slices: [],
-  spinning: false,
-  angle: 0,
-  spinStart: 0,
-  spinDuration: 2400, // ms
-  spinFrom: 0,
-  spinTo: 0
-};
-
-const qs = id => document.getElementById(id);
-const wheel = qs('wheel');
-const ctx = wheel.getContext('2d');
-const DPR = window.devicePixelRatio || 1;
-
-// scale canvas for crisp lines
-function scaleCanvas() {
-  const w = wheel.clientWidth * DPR;
-  const h = wheel.clientHeight * DPR;
-  wheel.width = w; wheel.height = h;
-}
-scaleCanvas();
-window.addEventListener('resize', scaleCanvas);
-
-function boroughFromPropId(propId) {
-  const map = {B:'Brooklyn', M:'Manhattan', Q:'Queens', X:'Bronx', R:'Staten Island'};
-  return map[(propId||'')[0]] || 'Unknown';
-}
-
-function normalizeLatLon(p) {
-  let lat = parseFloat(p.lat), lon = parseFloat(p.lon);
-  // Swap if obviously reversed (we expect lat ~ 40.x, lon ~ -73.x)
-  if (Math.abs(lat) > 90 || Math.abs(lon) < 90) { const t = lat; lat = lon; lon = t; }
-  return {lat, lon};
-}
-
-function friendlyAccess(v) {
-  const t = String(v||'').toLowerCase();
-  if (t.includes('yes') || t.includes('accessible')) return 'Yes';
-  if (t.includes('no') || t.includes('not')) return 'No';
-  if (t.includes('limited')) return 'Limited';
-  return v || 'Unknown';
-}
-
-async function applyFilters() {
-  const bSel = qs('borough').value;
-  const accSel = qs('accessible').value; // Any | Yes | No
-  const sensSel = qs('sensory').value; // Any | Y | N
-  
-  // Use database filtering for better performance
-  const filters = {};
-  if (bSel !== 'All') filters.borough = bSel;
-  if (accSel !== 'Any') filters.accessible = accSel;
-  if (sensSel !== 'Any') filters.sensory = sensSel;
-  
-  let items = await playgroundDB.filterPlaygrounds(filters);
-
-  // Limit slices for readability
-  const lim = parseInt(qs('limit').value, 10);
-  if (lim && items.length > lim) {
-    // sample evenly across the list
-    const step = items.length / lim;
-    items = Array.from({length: lim}, (_, i) => items[Math.floor(i*step)]);
-  }
-
-  state.filtered = items;
-  qs('count').textContent = `${items.length} playgrounds match`;
-  buildSlices();
-  drawWheel();
-}
-
-function buildSlices() {
-  let items = [...state.filtered];
-  
-  // If odd number of playgrounds, remove one to maintain stripe pattern
-  if (items.length % 2 === 1 && items.length > 1) {
-    items = items.slice(0, -1);
-  }
-  
-  state.slices = items.map((p, i) => ({
-    label: p.Name,
-    index: state.filtered.indexOf(p), // keep original index for result lookup
-    color: i % 2 ? '#dc2626' : '#ffffff',
-  }));
-}
-
-function drawWheel() {
-  const {width, height} = wheel; // scaled by DPR
-  const cx = width/2, cy = height/2; const r = Math.min(cx, cy) - 16*DPR;
-  ctx.clearRect(0,0,width,height);
-  const n = Math.max(1, state.slices.length);
-  const step = Math.PI*2 / n;
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate(state.angle);
-  state.slices.forEach((s, i) => {
-    const a0 = i*step;
-    const a1 = a0 + step;
-    // slice
-    ctx.beginPath();
-    ctx.moveTo(0,0);
-    ctx.arc(0,0,r,a0,a1);
-    ctx.closePath();
-    ctx.fillStyle = s.color;
-    ctx.fill();
-
-    // radial divider
-    ctx.strokeStyle = '#243249';
-    ctx.lineWidth = 1*DPR;
-    ctx.beginPath();
-    ctx.moveTo(0,0);
-    ctx.lineTo(r*Math.cos(a1), r*Math.sin(a1));
-    ctx.stroke();
-
-    // label (only if enough room)
-    if (n <= 36) {
-      const mid = (a0+a1)/2;
-      ctx.save();
-      ctx.rotate(mid);
-      ctx.translate(r*0.7, 0);
-      
-      // Text radiates outward from center - no additional rotation needed
-      // Text is already aligned with the spoke direction
-      
-      // Use contrasting text color based on slice color
-      ctx.fillStyle = s.color === '#ffffff' ? '#000000' : '#ffffff';
-      ctx.font = `bold ${12*DPR}px system-ui, -apple-system, Segoe UI, Roboto`;
-      const text = s.label.length > 28 ? s.label.slice(0,27)+'…' : s.label;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(text, 0, 0);
-      ctx.restore();
-    }
-  });
-  // hub
-  ctx.fillStyle = '#0b111a';
-  ctx.beginPath(); ctx.arc(0,0,r*0.2,0,Math.PI*2); ctx.fill();
-  ctx.strokeStyle = '#2b3a51'; ctx.lineWidth = 2*DPR; ctx.stroke();
-  ctx.restore();
-}
-
-function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
-
-function spin() {
-  if (state.spinning || state.slices.length === 0) return;
-  state.spinning = true;
-  state.spinStart = performance.now();
-  state.spinFrom = state.angle;
-  // spin 5–8 full rotations + land on random slice
-  const n = Math.max(1, state.slices.length);
-  const targetIndex = Math.floor(Math.random()*n);
-  const step = (Math.PI*2)/n;
-  const targetAngle = (Math.PI/2) - (targetIndex*step + step/2); // align target to needle (right side)
-  // normalize current angle to avoid huge numbers
-  const current = ((state.angle % (Math.PI*2)) + Math.PI*2)%(Math.PI*2);
-  const baseSpins = Math.PI*2 * (5 + Math.floor(Math.random()*3));
-  state.spinTo = current + baseSpins + targetAngle;
-
-  const animate = (now)=>{
-    const t = Math.min(1, (now - state.spinStart)/state.spinDuration);
-    const k = easeOutCubic(t);
-    state.angle = state.spinFrom + (state.spinTo - state.spinFrom)*k;
-    drawWheel();
-    if (t < 1) requestAnimationFrame(animate); else { state.spinning = false; selectByAngle(); }
-  };
-  requestAnimationFrame(animate);
-}
-
-function selectByAngle() {
-  const n = Math.max(1, state.slices.length);
-  const step = (Math.PI*2)/n;
-  // needle points to 0 radians to the right; convert angle to slice index
-  const a = ((-state.angle) % (Math.PI*2) + Math.PI*2)%(Math.PI*2);
-  const idx = Math.floor(a / step);
-  const s = state.slices[idx];
-  if (!s) return;
-  showResult(state.filtered[s.index]);
-}
-
-function pickRandom() {
-  if (state.filtered.length === 0) return;
-  const p = state.filtered[Math.floor(Math.random()*state.filtered.length)];
-  showResult(p);
-}
-
-function gmapLink(lat,lon,name) {
-  const q = encodeURIComponent(`${lat},${lon} (${name})`);
-  return `https://www.google.com/maps/search/?api=1&query=${q}`;
-}
-
-function showResult(p) {
-  const {lat, lon} = normalizeLatLon(p);
-  const borough = boroughFromPropId(p.Prop_ID);
-  const access = friendlyAccess(p.Accessible);
-  const sensory = (p['Sensory-Friendly']||'').toUpperCase();
-  const gm = gmapLink(lat,lon,p.Name);
-  
-  // Store current playground for favorites
-  currentPlayground = p;
-  updateFavoriteButton();
-  
-  qs('result').innerHTML = `
-    <div class="chip">${borough}</div>
-    <h3>${p.Name}</h3>
-    <div class="sub">${p.Location || ''}</div>
-    <p style="margin:.6em 0 1em;">
-      <a href="${gm}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">Open in Google Maps ↗</a>
-    </p>
-    <div>
-      <span class="chip ${access==='Yes'?'ok':'no'}">Accessible: ${access}</span>
-      <span class="chip ${sensory==='Y'?'ok':'no'}">Sensory-Friendly: ${sensory||'?'}</span>
-      <span class="chip">Playground ID: ${p.Playground_ID||p.Prop_ID}</span>
+  <!-- Management Panel (initially hidden) -->
+  <div style="position:fixed;top:90px;right:20px;z-index:1001;display:none;" id="managementPanel">
+    <div style="background:var(--panel);border:1px solid #1f2733;border-radius:12px;padding:12px;box-shadow:0 5px 20px rgba(0,0,0,.5);">
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button id="addFavorite" class="secondary">❤️ Add to Favorites</button>
+        <button id="viewFavorites" class="secondary">📋 View Favorites</button>
+        <button id="exportData" class="secondary">💾 Export Data</button>
+        <button id="showStats" class="secondary">📊 Show Stats</button>
+        <button id="resetDatabase" class="danger">🗑️ Reset Database</button>
+      </div>
     </div>
-  `;
-}
+  </div>
 
-async function load() {
-  try {
-    // First, try to load from database
-    state.all = await playgroundDB.getAllPlaygrounds();
-    
-    // If database is empty, load from JSON and initialize database
-    if (state.all.length === 0) {
-      qs('count').textContent = 'Loading playground data...';
-      const res = await fetch('./DPR_Playgrounds_001.json');
-      const data = await res.json();
-      // basic normalization
-      const normalizedData = data.map(p => ({...p})).filter(p => p && p.Name);
+  <!-- Import Leaflet and MarkerCluster via script tags -->
+  <script src="./node_modules/leaflet/dist/leaflet.js"></script>
+  <script src="./node_modules/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+  <script type="module">
+    import playgroundDB from './db.js';
+
+    // Global state
+    const state = {
+      map: null,
+      playgrounds: [],
+      filteredPlaygrounds: [],
+      markers: [],
+      markerClusterGroup: null,
+      currentPlayground: null
+    };
+
+    const qs = id => document.getElementById(id);
+
+    // Initialize map
+    function initMap() {
+      // Create map centered on NYC
+      state.map = L.map('map', {
+        zoomControl: false
+      }).setView([40.7589, -73.9851], 11);
+
+      // Add zoom control to top right
+      L.control.zoom({ position: 'topright' }).addTo(state.map);
+
+      // Add OpenStreetMap tiles
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(state.map);
+
+      // Initialize marker cluster group
+      state.markerClusterGroup = L.markerClusterGroup({
+        maxClusterRadius: 50,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false
+      });
       
-      // Initialize database with JSON data
-      await playgroundDB.initialize(normalizedData);
-      state.all = await playgroundDB.getAllPlaygrounds();
+      state.map.addLayer(state.markerClusterGroup);
     }
-    
-    qs('count').textContent = `${state.all.length} total playgrounds`;
-    await applyFilters();
-  } catch (e) {
-    qs('count').textContent = 'Could not load playground data';
-    console.error(e);
-  }
-}
 
-// Database management functions
-let currentPlayground = null;
-
-async function addToFavorites() {
-  if (!currentPlayground) {
-    alert('Please spin the wheel first to select a playground!');
-    return;
-  }
-  
-  try {
-    const isAlreadyFavorite = await playgroundDB.isFavorite(currentPlayground.id);
-    if (isAlreadyFavorite) {
-      await playgroundDB.removeFromFavorites(currentPlayground.id);
-      alert(`${currentPlayground.Name} removed from favorites!`);
-    } else {
-      await playgroundDB.addToFavorites(currentPlayground.id);
-      alert(`${currentPlayground.Name} added to favorites!`);
+    // Create custom marker icons
+    function createMarkerIcon(playground) {
+      const access = normalizeAccessible(playground.Accessible);
+      const sensory = (playground['Sensory-Friendly'] || '').toUpperCase();
+      
+      let color = '#dc2626'; // Default red
+      if (access === 'Yes') color = '#38b000'; // Green for accessible
+      else if (access === 'Limited') color = '#f59e0b'; // Yellow for limited
+      
+      // Different icon for sensory-friendly
+      const icon = sensory === 'Y' ? '🧸' : '🛝';
+      
+      return L.divIcon({
+        html: `<div style="background-color: ${color}; border: 2px solid white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">${icon}</div>`,
+        className: 'custom-marker',
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+      });
     }
-    
-    // Update button text
-    updateFavoriteButton();
-  } catch (e) {
-    console.error('Error managing favorites:', e);
-    alert('Error managing favorites');
-  }
-}
 
-async function updateFavoriteButton() {
-  if (currentPlayground) {
-    const isFav = await playgroundDB.isFavorite(currentPlayground.id);
-    qs('addFavorite').textContent = isFav ? '💔 Remove from Favorites' : '❤️ Add to Favorites';
-  }
-}
-
-async function viewFavorites() {
-  try {
-    const favorites = await playgroundDB.getFavorites();
-    if (favorites.length === 0) {
-      alert('No favorites yet! Spin the wheel and add some playgrounds to your favorites.');
-      return;
+    // Create popup content
+    function createPopupContent(playground) {
+      const borough = boroughFromPropId(playground.Prop_ID);
+      const access = normalizeAccessible(playground.Accessible);
+      const sensory = (playground['Sensory-Friendly'] || '').toUpperCase();
+      
+      return `
+        <div class="popup-content">
+          <div class="popup-title">${playground.Name}</div>
+          <div class="popup-location">${playground.Location || ''}</div>
+          <div class="popup-chips">
+            <span class="chip">${borough}</span>
+            <span class="chip ${access === 'Yes' ? 'ok' : 'no'}">♿ ${access}</span>
+            <span class="chip ${sensory === 'Y' ? 'ok' : 'no'}">👶 ${sensory === 'Y' ? 'Sensory-Friendly' : 'Regular'}</span>
+          </div>
+          <div style="margin-top: 8px;">
+            <button onclick="showPlaygroundDetails('${playground.Prop_ID}')" style="background: var(--accent); color: #071019; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">View Details</button>
+          </div>
+        </div>
+      `;
     }
-    
-    const favoritesList = favorites.map(p => 
-      `• ${p.Name} (${boroughFromPropId(p.Prop_ID)})`
-    ).join('\n');
-    
-    alert(`Your Favorite Playgrounds (${favorites.length}):\n\n${favoritesList}`);
-  } catch (e) {
-    console.error('Error viewing favorites:', e);
-    alert('Error loading favorites');
-  }
-}
 
-async function exportData() {
-  try {
-    const data = await playgroundDB.exportToJSON();
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'playground_data_export.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    alert('Data exported successfully!');
-  } catch (e) {
-    console.error('Error exporting data:', e);
-    alert('Error exporting data');
-  }
-}
+    // Add playground markers to map
+    function addPlaygroundMarkers() {
+      // Clear existing markers
+      state.markerClusterGroup.clearLayers();
+      state.markers = [];
 
-async function showStats() {
-  try {
-    const stats = await playgroundDB.getStats();
-    const favorites = await playgroundDB.getFavorites();
-    
-    alert(`Playground Database Statistics:
-    
-📊 Total Playgrounds: ${stats.total}
-♿ Accessible: ${stats.accessible} (${stats.accessiblePercent}%)
-👶 Sensory-Friendly: ${stats.sensoryFriendly} (${stats.sensoryPercent}%)
-❤️ Your Favorites: ${favorites.length}
+      state.filteredPlaygrounds.forEach(playground => {
+        const lat = parseFloat(playground.lat);
+        const lon = parseFloat(playground.lon);
+        
+        if (isNaN(lat) || isNaN(lon)) return;
 
-Database stores all playground data locally for fast filtering and favorites management!`);
-  } catch (e) {
-    console.error('Error loading stats:', e);
-    alert('Error loading statistics');
-  }
-}
+        const marker = L.marker([lat, lon], {
+          icon: createMarkerIcon(playground)
+        });
 
-async function resetDatabase() {
-  if (!confirm('⚠️ This will delete ALL playground data and favorites from your browser. Are you sure?')) {
-    return;
-  }
-  
-  try {
-    await playgroundDB.resetDatabase();
-    alert('✅ Database reset successfully! The page will reload to import fresh data.');
-    location.reload();
-  } catch (e) {
-    console.error('Error resetting database:', e);
-    alert('Error resetting database. Try refreshing the page.');
-  }
-}
+        marker.bindPopup(createPopupContent(playground));
+        
+        marker.on('click', () => {
+          showPlaygroundDetails(playground.Prop_ID);
+        });
 
-async function reloadData() {
-  try {
-    qs('count').textContent = 'Reloading playground data...';
-    const res = await fetch('./DPR_Playgrounds_001.json');
-    const data = await res.json();
-    const normalizedData = data.map(p => ({...p})).filter(p => p && p.Name);
-    
-    await playgroundDB.clearAll();
-    await playgroundDB.initialize(normalizedData);
-    state.all = await playgroundDB.getAllPlaygrounds();
-    
-    qs('count').textContent = `${state.all.length} total playgrounds`;
-    await applyFilters();
-    alert('✅ Data reloaded successfully from JSON!');
-  } catch (e) {
-    console.error('Error reloading data:', e);
-    alert('Error reloading data');
-  }
-}
+        state.markers.push({ marker, playground });
+        state.markerClusterGroup.addLayer(marker);
+      });
 
-// wire up UI
-qs('apply').addEventListener('click', () => applyFilters());
-qs('spin').addEventListener('click', spin);
-qs('spin2').addEventListener('click', spin);
-qs('pick').addEventListener('click', pickRandom);
+      // Update count
+      qs('count').textContent = `${state.filteredPlaygrounds.length} playgrounds`;
+    }
 
-// Wire up database management buttons
-qs('addFavorite').addEventListener('click', () => addToFavorites());
-qs('viewFavorites').addEventListener('click', () => viewFavorites());
-qs('exportData').addEventListener('click', () => exportData());
-qs('showStats').addEventListener('click', () => showStats());
-qs('resetDatabase').addEventListener('click', () => resetDatabase());
-qs('reloadData').addEventListener('click', () => reloadData());
+    // Helper functions
+    function boroughFromPropId(propId) {
+      const map = {B:'Brooklyn', M:'Manhattan', Q:'Queens', X:'Bronx', R:'Staten Island'};
+      return map[(propId||'')[0]] || 'Unknown';
+    }
 
-load();
-</script>
+    function normalizeAccessible(value) {
+      const val = String(value || '').toLowerCase();
+      if (val.includes('yes') || val.includes('accessible')) return 'Yes';
+      if (val.includes('no') || val.includes('not')) return 'No';
+      if (val.includes('limited')) return 'Limited';
+      return value || 'Unknown';
+    }
+
+    function normalizeLatLon(p) {
+      let lat = parseFloat(p.lat), lon = parseFloat(p.lon);
+      if (Math.abs(lat) > 90 || Math.abs(lon) < 90) { const t = lat; lat = lon; lon = t; }
+      return {lat, lon};
+    }
+
+    // Show playground details in panel
+    window.showPlaygroundDetails = function(propId) {
+      const playground = state.playgrounds.find(p => p.Prop_ID === propId);
+      if (!playground) return;
+
+      state.currentPlayground = playground;
+      const {lat, lon} = normalizeLatLon(playground);
+      const borough = boroughFromPropId(playground.Prop_ID);
+      const access = normalizeAccessible(playground.Accessible);
+      const sensory = (playground['Sensory-Friendly'] || '').toUpperCase();
+      const gmapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lat},${lon} (${playground.Name})}`)}`;
+
+      qs('detailsTitle').textContent = playground.Name;
+      qs('detailsLocation').textContent = playground.Location || '';
+      
+      qs('detailsInfo').innerHTML = `
+        <div style="margin-bottom: 16px;">
+          <span class="chip">${borough}</span>
+          <span class="chip ${access === 'Yes' ? 'ok' : 'no'}">♿ Accessible: ${access}</span>
+          <span class="chip ${sensory === 'Y' ? 'ok' : 'no'}">👶 Sensory-Friendly: ${sensory || '?'}</span>
+          <span class="chip">ID: ${playground.Playground_ID || playground.Prop_ID}</span>
+        </div>
+        <p style="margin: 0;">
+          <a href="${gmapLink}" target="_blank" rel="noopener" style="color: var(--accent); text-decoration: none;">🗺️ Open in Google Maps ↗</a>
+        </p>
+      `;
+
+      qs('detailsActions').innerHTML = `
+        <button id="favoriteBtn" class="secondary">❤️ Add to Favorites</button>
+        <button onclick="pickRandomPlayground()" class="secondary">🎲 Another Random</button>
+      `;
+
+      updateFavoriteButton();
+      qs('detailsPanel').classList.add('visible');
+    };
+
+    // Apply filters
+    async function applyFilters() {
+      const borough = qs('borough').value;
+      const accessible = qs('accessible').value;
+      const sensory = qs('sensory').value;
+
+      const filters = {};
+      if (borough !== 'All') filters.borough = borough;
+      if (accessible !== 'Any') filters.accessible = accessible;
+      if (sensory !== 'Any') filters.sensory = sensory;
+
+      state.filteredPlaygrounds = await playgroundDB.filterPlaygrounds(filters);
+      addPlaygroundMarkers();
+    }
+
+    // Pick random playground
+    function pickRandomPlayground() {
+      if (state.filteredPlaygrounds.length === 0) return;
+      
+      const random = state.filteredPlaygrounds[Math.floor(Math.random() * state.filteredPlaygrounds.length)];
+      const {lat, lon} = normalizeLatLon(random);
+      
+      state.map.flyTo([lat, lon], 16);
+      setTimeout(() => showPlaygroundDetails(random.Prop_ID), 500);
+    }
+
+    // Find user location
+    function findNearMe() {
+      if (!navigator.geolocation) {
+        alert('Geolocation is not supported by this browser.');
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const { latitude, longitude } = position.coords;
+          state.map.flyTo([latitude, longitude], 14);
+          
+          // Add temporary marker for user location
+          const userMarker = L.marker([latitude, longitude], {
+            icon: L.divIcon({
+              html: '<div style="background-color: #4fd1c5; border: 3px solid white; border-radius: 50%; width: 20px; height: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>',
+              className: 'user-location-marker',
+              iconSize: [20, 20],
+              iconAnchor: [10, 10]
+            })
+          }).addTo(state.map);
+
+          setTimeout(() => state.map.removeLayer(userMarker), 5000);
+        },
+        error => {
+          alert('Unable to get your location. Please make sure location services are enabled.');
+        }
+      );
+    }
+
+    // Database management functions
+    let currentPlayground = null;
+
+    async function updateFavoriteButton() {
+      if (state.currentPlayground && qs('favoriteBtn')) {
+        const isFav = await playgroundDB.isFavorite(state.currentPlayground.id);
+        qs('favoriteBtn').textContent = isFav ? '💔 Remove from Favorites' : '❤️ Add to Favorites';
+      }
+    }
+
+    async function toggleFavorite() {
+      if (!state.currentPlayground) return;
+      
+      try {
+        const isFavorite = await playgroundDB.isFavorite(state.currentPlayground.id);
+        if (isFavorite) {
+          await playgroundDB.removeFromFavorites(state.currentPlayground.id);
+        } else {
+          await playgroundDB.addToFavorites(state.currentPlayground.id);
+        }
+        updateFavoriteButton();
+      } catch (e) {
+        console.error('Error managing favorites:', e);
+      }
+    }
+
+    // Load and initialize
+    async function load() {
+      try {
+        console.log('Starting load process...');
+        
+        // Initialize map first
+        console.log('Initializing map...');
+        initMap();
+        console.log('Map initialized');
+        
+        // Load playground data
+        console.log('Loading playground data from database...');
+        state.playgrounds = await playgroundDB.getAllPlaygrounds();
+        console.log('Got', state.playgrounds.length, 'playgrounds from database');
+        
+        if (state.playgrounds.length === 0) {
+          console.log('Database empty, loading from JSON...');
+          qs('loading').textContent = 'Loading playground data from JSON...';
+          const res = await fetch('./DPR_Playgrounds_001.json');
+          console.log('JSON fetch response:', res.status);
+          const data = await res.json();
+          console.log('JSON data loaded, length:', data.length);
+          const normalizedData = data.map(p => ({...p})).filter(p => p && p.Name);
+          console.log('Normalized data length:', normalizedData.length);
+          
+          console.log('Initializing database with JSON data...');
+          await playgroundDB.initialize(normalizedData);
+          state.playgrounds = await playgroundDB.getAllPlaygrounds();
+          console.log('Database initialized, got', state.playgrounds.length, 'playgrounds');
+        }
+        
+        state.filteredPlaygrounds = [...state.playgrounds];
+        console.log('Adding markers to map...');
+        addPlaygroundMarkers();
+        
+        qs('loading').style.display = 'none';
+        qs('count').textContent = `${state.playgrounds.length} playgrounds loaded`;
+        console.log('Load process completed successfully');
+        
+      } catch (e) {
+        qs('loading').textContent = 'Error loading playground data: ' + e.message;
+        console.error('Load error:', e);
+      }
+    }
+
+    // Event listeners
+    qs('applyFilters').addEventListener('click', applyFilters);
+    qs('pickRandom').addEventListener('click', pickRandomPlayground);
+    qs('findMe').addEventListener('click', findNearMe);
+    qs('closeDetails').addEventListener('click', () => {
+      qs('detailsPanel').classList.remove('visible');
+    });
+
+    // Favorite button handler (delegated)
+    document.addEventListener('click', (e) => {
+      if (e.target && e.target.id === 'favoriteBtn') {
+        toggleFavorite();
+      }
+    });
+
+    // Load everything
+    load();
+  </script>
 </body>
 </html>

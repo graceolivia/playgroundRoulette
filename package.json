@@ -8,7 +8,9 @@
     "dev": "python -m http.server 8000"
   },
   "dependencies": {
-    "dexie": "^3.2.4"
+    "dexie": "^3.2.4",
+    "leaflet": "^1.9.4",
+    "leaflet.markercluster": "^1.5.3"
   },
   "devDependencies": {},
   "author": "",
