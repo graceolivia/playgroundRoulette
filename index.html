@@ -480,12 +480,29 @@
       const accessible = qs('accessible').value;
       const sensory = qs('sensory').value;
 
-      const filters = {};
-      if (borough !== 'All') filters.borough = borough;
-      if (accessible !== 'Any') filters.accessible = accessible;
-      if (sensory !== 'Any') filters.sensory = sensory;
+      try {
+        const filters = {};
+        if (borough !== 'All') filters.borough = borough;
+        if (accessible !== 'Any') filters.accessible = accessible;
+        if (sensory !== 'Any') filters.sensory = sensory;
 
-      state.filteredPlaygrounds = await playgroundDB.filterPlaygrounds(filters);
+        state.filteredPlaygrounds = await playgroundDB.filterPlaygrounds(filters);
+      } catch (e) {
+        console.warn('Database filtering failed, using client-side filtering:', e);
+        // Fallback to client-side filtering
+        let items = [...state.playgrounds];
+        items = items.filter(p => {
+          const pBorough = boroughFromPropId(p.Prop_ID);
+          const pAccess = normalizeAccessible(p.Accessible);
+          const pSens = (p['Sensory-Friendly']||'').toUpperCase();
+          if (borough !== 'All' && pBorough !== borough) return false;
+          if (accessible !== 'Any' && pAccess !== accessible) return false;
+          if (sensory !== 'Any' && pSens !== sensory) return false;
+          return true;
+        });
+        state.filteredPlaygrounds = items;
+      }
+      
       addPlaygroundMarkers();
     }
 
@@ -568,23 +585,45 @@
         
         // Load playground data
         console.log('Loading playground data from database...');
-        state.playgrounds = await playgroundDB.getAllPlaygrounds();
-        console.log('Got', state.playgrounds.length, 'playgrounds from database');
+        try {
+          state.playgrounds = await playgroundDB.getAllPlaygrounds();
+          console.log('Got', state.playgrounds.length, 'playgrounds from database');
+        } catch (dbError) {
+          console.warn('Database access failed, will load from JSON:', dbError);
+          state.playgrounds = [];
+        }
         
         if (state.playgrounds.length === 0) {
           console.log('Database empty, loading from JSON...');
           qs('loading').textContent = 'Loading playground data from JSON...';
-          const res = await fetch('./DPR_Playgrounds_001.json');
-          console.log('JSON fetch response:', res.status);
-          const data = await res.json();
-          console.log('JSON data loaded, length:', data.length);
-          const normalizedData = data.map(p => ({...p})).filter(p => p && p.Name);
-          console.log('Normalized data length:', normalizedData.length);
           
-          console.log('Initializing database with JSON data...');
-          await playgroundDB.initialize(normalizedData);
-          state.playgrounds = await playgroundDB.getAllPlaygrounds();
-          console.log('Database initialized, got', state.playgrounds.length, 'playgrounds');
+          try {
+            const res = await fetch('./DPR_Playgrounds_001.json');
+            console.log('JSON fetch response:', res.status);
+            
+            if (!res.ok) {
+              throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            
+            const data = await res.json();
+            console.log('JSON data loaded, length:', data.length);
+            const normalizedData = data.map(p => ({...p})).filter(p => p && p.Name);
+            console.log('Normalized data length:', normalizedData.length);
+            
+            // If database fails, just use the JSON data directly
+            try {
+              console.log('Initializing database with JSON data...');
+              await playgroundDB.initialize(normalizedData);
+              state.playgrounds = await playgroundDB.getAllPlaygrounds();
+              console.log('Database initialized, got', state.playgrounds.length, 'playgrounds');
+            } catch (dbError) {
+              console.warn('Database initialization failed, using JSON data directly:', dbError);
+              state.playgrounds = normalizedData;
+            }
+          } catch (fetchError) {
+            console.error('Failed to fetch JSON data:', fetchError);
+            throw fetchError;
+          }
         }
         
         state.filteredPlaygrounds = [...state.playgrounds];
