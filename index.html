@@ -288,16 +288,88 @@
     </div>
   </div>
 
-  <!-- Management Panel (initially hidden) -->
+  <!-- Admin Management Panel (initially hidden) -->
   <div style="position:fixed;top:90px;right:20px;z-index:1001;display:none;" id="managementPanel">
-    <div style="background:var(--panel);border:1px solid #1f2733;border-radius:12px;padding:12px;box-shadow:0 5px 20px rgba(0,0,0,.5);">
+    <div style="background:var(--panel);border:1px solid #1f2733;border-radius:12px;padding:16px;box-shadow:0 5px 20px rgba(0,0,0,.5);min-width:200px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid #2a3547;padding-bottom:8px;">
+        <h4 style="margin:0;color:var(--accent);">🔧 Admin Panel</h4>
+        <button id="adminClose" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;">×</button>
+      </div>
+      
       <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="color:var(--muted);font-size:12px;margin-bottom:4px;">Reviews</div>
+        <button id="addReview" class="secondary">✏️ Add Review</button>
+        <button id="manageReviews" class="secondary">📝 Manage Reviews</button>
+        
+        <div style="color:var(--muted);font-size:12px;margin:12px 0 4px;">Database</div>
         <button id="addFavorite" class="secondary">❤️ Add to Favorites</button>
         <button id="viewFavorites" class="secondary">📋 View Favorites</button>
         <button id="exportData" class="secondary">💾 Export Data</button>
         <button id="showStats" class="secondary">📊 Show Stats</button>
-        <button id="resetDatabase" class="danger">🗑️ Reset Database</button>
+        
+        <div style="border-top:1px solid #2a3547;margin-top:8px;padding-top:8px;">
+          <button id="resetDatabase" class="danger">🗑️ Reset Database</button>
+          <button id="adminLogout" class="danger" style="margin-top:4px;">🚪 Logout</button>
+        </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Review Modal -->
+  <div id="reviewModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:2000;padding:20px;">
+    <div style="background:var(--panel);border-radius:12px;max-width:600px;margin:50px auto;padding:24px;max-height:80vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h3 style="margin:0;">Add Playground Review</h3>
+        <button id="closeReviewModal" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:24px;">×</button>
+      </div>
+      
+      <form id="reviewForm">
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:8px;color:var(--muted);">Playground</label>
+          <select id="reviewPlayground" style="width:100%;padding:10px;border:1px solid #273143;border-radius:8px;background:#0e141d;color:var(--ink);">
+            <option value="">Select a playground...</option>
+          </select>
+        </div>
+        
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:8px;color:var(--muted);">Title</label>
+          <input type="text" id="reviewTitle" placeholder="Review title..." style="width:100%;padding:10px;border:1px solid #273143;border-radius:8px;background:#0e141d;color:var(--ink);">
+        </div>
+        
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:8px;color:var(--muted);">Rating</label>
+          <div style="display:flex;gap:4px;">
+            <button type="button" class="star-rating" data-rating="1">⭐</button>
+            <button type="button" class="star-rating" data-rating="2">⭐</button>
+            <button type="button" class="star-rating" data-rating="3">⭐</button>
+            <button type="button" class="star-rating" data-rating="4">⭐</button>
+            <button type="button" class="star-rating" data-rating="5">⭐</button>
+          </div>
+          <input type="hidden" id="reviewRating" value="5">
+        </div>
+        
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:8px;color:var(--muted);">Review Content</label>
+          <textarea id="reviewContent" rows="4" placeholder="Write your review..." style="width:100%;padding:10px;border:1px solid #273143;border-radius:8px;background:#0e141d;color:var(--ink);resize:vertical;"></textarea>
+        </div>
+        
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:8px;color:var(--muted);">Author</label>
+          <input type="text" id="reviewAuthor" value="NYC Parks Team" style="width:100%;padding:10px;border:1px solid #273143;border-radius:8px;background:#0e141d;color:var(--ink);">
+        </div>
+        
+        <div style="margin-bottom:20px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="reviewFeatured" style="margin:0;">
+            <span style="color:var(--muted);">Featured Review</span>
+          </label>
+        </div>
+        
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button type="button" id="cancelReview" class="secondary">Cancel</button>
+          <button type="submit" id="saveReview">💾 Save Review</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -307,6 +379,16 @@
 
   <script type="module">
     import playgroundDB from './db.js';
+    
+    // Try to import admin config, fallback if not available
+    let ADMIN_CONFIG = null;
+    try {
+      const adminModule = await import('./admin-config.js');
+      ADMIN_CONFIG = adminModule.ADMIN_CONFIG;
+      console.log('Admin config loaded');
+    } catch (e) {
+      console.log('Admin config not found - admin features disabled');
+    }
 
     // Global state
     const state = {
@@ -315,10 +397,274 @@
       filteredPlaygrounds: [],
       markers: [],
       markerClusterGroup: null,
-      currentPlayground: null
+      currentPlayground: null,
+      isAdminMode: false,
+      adminAuthenticated: false
     };
 
     const qs = id => document.getElementById(id);
+
+    // Admin authentication functions
+    function checkAdminAuth() {
+      if (!ADMIN_CONFIG) return false;
+      return localStorage.getItem('playgroundAdminAuth') === 'authenticated';
+    }
+
+    function promptAdminLogin() {
+      if (!ADMIN_CONFIG) {
+        alert('Admin configuration not found. Admin features are disabled.');
+        return false;
+      }
+
+      const password = prompt('🔐 Enter admin password:');
+      if (!password) return false;
+
+      const inputHash = btoa(password);
+      if (inputHash === ADMIN_CONFIG.passwordHash) {
+        localStorage.setItem('playgroundAdminAuth', 'authenticated');
+        localStorage.setItem('adminLastLogin', new Date().toISOString());
+        state.adminAuthenticated = true;
+        console.log('Admin authenticated successfully');
+        return true;
+      } else {
+        alert('❌ Invalid password');
+        return false;
+      }
+    }
+
+    function logoutAdmin() {
+      localStorage.removeItem('playgroundAdminAuth');
+      localStorage.removeItem('adminLastLogin');
+      state.adminAuthenticated = false;
+      state.isAdminMode = false;
+      hideAdminPanel();
+      alert('👋 Admin logged out');
+    }
+
+    function toggleAdminMode() {
+      if (!state.adminAuthenticated) {
+        if (!promptAdminLogin()) return;
+      }
+      
+      state.isAdminMode = !state.isAdminMode;
+      if (state.isAdminMode) {
+        showAdminPanel();
+      } else {
+        hideAdminPanel();
+      }
+    }
+
+    function showAdminPanel() {
+      qs('managementPanel').style.display = 'block';
+      // Add admin badge to header
+      if (!qs('adminBadge')) {
+        const badge = document.createElement('div');
+        badge.id = 'adminBadge';
+        badge.innerHTML = '🔧 Admin Mode';
+        badge.style.cssText = 'position:fixed;top:10px;right:10px;background:#6b2e2e;color:#ffdede;padding:8px 12px;border-radius:6px;font-size:12px;z-index:2000;';
+        document.body.appendChild(badge);
+      }
+    }
+
+    function hideAdminPanel() {
+      qs('managementPanel').style.display = 'none';
+      const badge = qs('adminBadge');
+      if (badge) badge.remove();
+    }
+
+    // Review management functions
+    async function loadPlaygroundReviews(propId) {
+      try {
+        const reviews = await playgroundDB.getReviewsForPlayground(propId);
+        displayReviews(reviews);
+      } catch (e) {
+        console.warn('Could not load reviews:', e);
+        qs('playgroundReviews').innerHTML = '<div style="color: var(--muted); font-size: 14px;">No reviews available</div>';
+      }
+    }
+
+    function displayReviews(reviews) {
+      const container = qs('playgroundReviews');
+      if (!container) return;
+
+      if (reviews.length === 0) {
+        container.innerHTML = '<div style="color: var(--muted); font-size: 14px;">No reviews yet</div>';
+        return;
+      }
+
+      const reviewsHtml = reviews.map(review => `
+        <div style="border: 1px solid #2a3547; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #0e141d;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+            <h4 style="margin: 0; font-size: 16px; color: var(--ink);">${review.title}</h4>
+            <div style="display: flex; gap: 2px;">
+              ${'⭐'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
+            </div>
+          </div>
+          <p style="margin: 0 0 8px 0; color: var(--ink); line-height: 1.4;">${review.content}</p>
+          <div style="font-size: 12px; color: var(--muted);">
+            By ${review.author} • ${new Date(review.date).toLocaleDateString()}
+            ${review.featured ? ' • <span style="color: var(--accent);">⭐ Featured</span>' : ''}
+          </div>
+        </div>
+      `).join('');
+
+      container.innerHTML = `
+        <div style="margin-bottom: 12px;">
+          <h4 style="margin: 0; color: var(--accent);">📝 Reviews (${reviews.length})</h4>
+        </div>
+        ${reviewsHtml}
+      `;
+    }
+
+    function populatePlaygroundSelect() {
+      const select = qs('reviewPlayground');
+      if (!select || !state.playgrounds) return;
+
+      const sortedPlaygrounds = [...state.playgrounds].sort((a, b) => a.Name.localeCompare(b.Name));
+      select.innerHTML = '<option value="">Select a playground...</option>' +
+        sortedPlaygrounds.map(p => `<option value="${p.Prop_ID}">${p.Name} (${boroughFromPropId(p.Prop_ID)})</option>`).join('');
+    }
+
+    function showAddReviewModal() {
+      populatePlaygroundSelect();
+      
+      // Pre-select current playground if available
+      if (state.currentPlayground) {
+        qs('reviewPlayground').value = state.currentPlayground.Prop_ID;
+      }
+      
+      qs('reviewModal').style.display = 'block';
+    }
+
+    function hideAddReviewModal() {
+      qs('reviewModal').style.display = 'none';
+      qs('reviewForm').reset();
+      qs('reviewRating').value = '5';
+      updateStarDisplay(5);
+    }
+
+    function updateStarDisplay(rating) {
+      const stars = document.querySelectorAll('.star-rating');
+      stars.forEach((star, index) => {
+        if (index < rating) {
+          star.style.opacity = '1';
+          star.style.filter = 'grayscale(0)';
+        } else {
+          star.style.opacity = '0.3';
+          star.style.filter = 'grayscale(1)';
+        }
+      });
+    }
+
+    async function saveReview() {
+      const formData = {
+        playground_prop_id: qs('reviewPlayground').value,
+        title: qs('reviewTitle').value,
+        content: qs('reviewContent').value,
+        rating: parseInt(qs('reviewRating').value),
+        author: qs('reviewAuthor').value,
+        featured: qs('reviewFeatured').checked
+      };
+
+      // Validate form
+      if (!formData.playground_prop_id) {
+        alert('Please select a playground');
+        return;
+      }
+      if (!formData.title || !formData.content) {
+        alert('Please fill in title and content');
+        return;
+      }
+
+      try {
+        await playgroundDB.addReview(formData);
+        hideAddReviewModal();
+        
+        // Refresh reviews if we're viewing the same playground
+        if (state.currentPlayground && state.currentPlayground.Prop_ID === formData.playground_prop_id) {
+          loadPlaygroundReviews(formData.playground_prop_id);
+        }
+        
+        alert('✅ Review saved successfully!');
+      } catch (e) {
+        console.error('Error saving review:', e);
+        alert('❌ Error saving review: ' + e.message);
+      }
+    }
+
+    async function showReviewManager() {
+      try {
+        const reviews = await playgroundDB.getAllReviews();
+        let managerHtml = `
+          <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:2000;padding:20px;">
+            <div style="background:var(--panel);border-radius:12px;max-width:800px;margin:50px auto;padding:24px;max-height:80vh;overflow-y:auto;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <h3 style="margin:0;">📝 Review Manager (${reviews.length} reviews)</h3>
+                <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:24px;">×</button>
+              </div>
+              <div style="max-height:60vh;overflow-y:auto;">
+        `;
+
+        if (reviews.length === 0) {
+          managerHtml += '<div style="color:var(--muted);text-align:center;padding:40px;">No reviews found</div>';
+        } else {
+          managerHtml += reviews.map(review => {
+            const playground = state.playgrounds.find(p => p.Prop_ID === review.playground_prop_id);
+            const playgroundName = playground ? playground.Name : `Playground ${review.playground_prop_id}`;
+            
+            return `
+              <div style="border:1px solid #2a3547;border-radius:8px;padding:12px;margin-bottom:12px;background:#0e141d;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+                  <div>
+                    <h4 style="margin:0;font-size:14px;">${review.title}</h4>
+                    <div style="font-size:12px;color:var(--muted);">${playgroundName}</div>
+                  </div>
+                  <div style="display:flex;gap:8px;align-items:center;">
+                    <div style="display:flex;gap:1px;">${'⭐'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div>
+                    <button onclick="deleteReview(${review.id})" style="background:#6b2e2e;color:#ffdede;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;">Delete</button>
+                  </div>
+                </div>
+                <p style="margin:4px 0;font-size:12px;color:var(--ink);">${review.content.substring(0, 100)}${review.content.length > 100 ? '...' : ''}</p>
+                <div style="font-size:11px;color:var(--muted);">
+                  ${review.author} • ${new Date(review.date).toLocaleDateString()}
+                  ${review.featured ? ' • <span style="color:var(--accent);">Featured</span>' : ''}
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        managerHtml += `
+              </div>
+            </div>
+          </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', managerHtml);
+      } catch (e) {
+        console.error('Error loading reviews:', e);
+        alert('Error loading reviews: ' + e.message);
+      }
+    }
+
+    window.deleteReview = async function(reviewId) {
+      if (!confirm('Delete this review?')) return;
+      
+      try {
+        await playgroundDB.deleteReview(reviewId);
+        // Refresh the review manager
+        document.querySelector('[style*="position:fixed"][style*="z-index:2000"]')?.remove();
+        showReviewManager();
+        
+        // Refresh current playground reviews if applicable
+        if (state.currentPlayground) {
+          loadPlaygroundReviews(state.currentPlayground.Prop_ID);
+        }
+      } catch (e) {
+        console.error('Error deleting review:', e);
+        alert('Error deleting review: ' + e.message);
+      }
+    }
 
     // Initialize map
     function initMap() {
@@ -460,10 +806,16 @@
           <span class="chip ${sensory === 'Y' ? 'ok' : 'no'}">👶 Sensory-Friendly: ${sensory || '?'}</span>
           <span class="chip">ID: ${playground.Playground_ID || playground.Prop_ID}</span>
         </div>
-        <p style="margin: 0;">
+        <p style="margin: 0 0 16px 0;">
           <a href="${gmapLink}" target="_blank" rel="noopener" style="color: var(--accent); text-decoration: none;">🗺️ Open in Google Maps ↗</a>
         </p>
+        <div id="playgroundReviews">
+          <div style="color: var(--muted); font-size: 14px;">Loading reviews...</div>
+        </div>
       `;
+
+      // Load reviews for this playground
+      loadPlaygroundReviews(playground.Prop_ID);
 
       qs('detailsActions').innerHTML = `
         <button id="favoriteBtn" class="secondary">❤️ Add to Favorites</button>
@@ -640,6 +992,11 @@
       }
     }
 
+    // Check for admin authentication on load
+    if (checkAdminAuth()) {
+      state.adminAuthenticated = true;
+    }
+
     // Event listeners
     qs('applyFilters').addEventListener('click', applyFilters);
     qs('pickRandom').addEventListener('click', pickRandomPlayground);
@@ -648,12 +1005,50 @@
       qs('detailsPanel').classList.remove('visible');
     });
 
+    // Admin panel event listeners
+    qs('adminClose').addEventListener('click', () => toggleAdminMode());
+    qs('adminLogout').addEventListener('click', () => logoutAdmin());
+    qs('addReview').addEventListener('click', () => showAddReviewModal());
+    qs('manageReviews').addEventListener('click', () => showReviewManager());
+
+    // Review modal event listeners
+    qs('closeReviewModal').addEventListener('click', hideAddReviewModal);
+    qs('cancelReview').addEventListener('click', hideAddReviewModal);
+    qs('saveReview').addEventListener('click', saveReview);
+
+    // Star rating event listeners
+    document.querySelectorAll('.star-rating').forEach(star => {
+      star.addEventListener('click', (e) => {
+        e.preventDefault();
+        const rating = parseInt(e.target.dataset.rating);
+        qs('reviewRating').value = rating;
+        updateStarDisplay(rating);
+      });
+    });
+
+    // Review form submission
+    qs('reviewForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      saveReview();
+    });
+
+    // Keyboard shortcut for admin mode: Ctrl+Shift+A
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+        e.preventDefault();
+        toggleAdminMode();
+      }
+    });
+
     // Favorite button handler (delegated)
     document.addEventListener('click', (e) => {
       if (e.target && e.target.id === 'favoriteBtn') {
         toggleFavorite();
       }
     });
+
+    // Initialize star display
+    updateStarDisplay(5);
 
     // Load everything
     load();

@@ -86,3 +86,9 @@ build/
 # Test files (if you add testing later)
 test-results/
 playwright-report/
+
+# Admin configuration (contains private credentials)
+admin-config.js
+admin-config.local.js
+.admin-*
+ADMIN_SETUP.md

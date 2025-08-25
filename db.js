@@ -9,7 +9,8 @@ class PlaygroundDB extends Dexie {
     this.version(1).stores({
       playgrounds: '++id, Prop_ID, Playground_ID, Name, Location, Accessible, lat, lon',
       settings: 'key, value',
-      favorites: '++id, playground_id, added_date'
+      favorites: '++id, playground_id, added_date',
+      reviews: '++id, playground_prop_id, title, content, rating, author, date, featured, approved'
     });
   }
 }
@@ -203,6 +204,86 @@ class PlaygroundDatabase {
   async importFromJSON(jsonData) {
     await this.clearAll();
     await this.initialize(jsonData);
+  }
+
+  // Review management methods
+  async addReview(reviewData) {
+    const review = {
+      playground_prop_id: reviewData.playground_prop_id,
+      title: reviewData.title,
+      content: reviewData.content,
+      rating: reviewData.rating,
+      author: reviewData.author || 'Anonymous',
+      date: reviewData.date || new Date().toISOString(),
+      featured: reviewData.featured || false,
+      approved: reviewData.approved !== undefined ? reviewData.approved : true,
+      photos: reviewData.photos || []
+    };
+    return await this.db.reviews.add(review);
+  }
+
+  async updateReview(reviewId, updates) {
+    return await this.db.reviews.update(reviewId, updates);
+  }
+
+  async deleteReview(reviewId) {
+    return await this.db.reviews.delete(reviewId);
+  }
+
+  async getReviewsForPlayground(propId) {
+    return await this.db.reviews
+      .where('playground_prop_id')
+      .equals(propId)
+      .and(review => review.approved !== false)
+      .reverse()
+      .sortBy('date');
+  }
+
+  async getAllReviews() {
+    return await this.db.reviews.orderBy('date').reverse().toArray();
+  }
+
+  async getFeaturedReviews() {
+    return await this.db.reviews
+      .where('featured')
+      .equals(true)
+      .and(review => review.approved !== false)
+      .reverse()
+      .sortBy('date');
+  }
+
+  async getReviewStats() {
+    const total = await this.db.reviews.count();
+    const approved = await this.db.reviews.where('approved').equals(true).count();
+    const featured = await this.db.reviews.where('featured').equals(true).count();
+    const avgRating = await this.db.reviews.where('approved').equals(true).toArray()
+      .then(reviews => {
+        if (reviews.length === 0) return 0;
+        const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
+        return Math.round((sum / reviews.length) * 10) / 10;
+      });
+
+    return {
+      total,
+      approved,
+      featured,
+      avgRating,
+      pending: total - approved
+    };
+  }
+
+  // Search reviews
+  async searchReviews(searchTerm) {
+    const term = searchTerm.toLowerCase();
+    return await this.db.reviews
+      .filter(review => 
+        (review.title || '').toLowerCase().includes(term) ||
+        (review.content || '').toLowerCase().includes(term) ||
+        (review.author || '').toLowerCase().includes(term)
+      )
+      .and(review => review.approved !== false)
+      .reverse()
+      .sortBy('date');
   }
 }
 
