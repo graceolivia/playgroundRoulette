@@ -490,6 +490,58 @@
     </div>
   </div>
 
+  <!-- Near Me Modal -->
+  <div id="nearMeModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:2000;padding:20px;">
+    <div style="background:var(--panel);border-radius:12px;max-width:500px;margin:50px auto;padding:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h3 style="margin:0;">📍 Find Playgrounds Near You</h3>
+        <button id="closeNearMe" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:24px;">×</button>
+      </div>
+      
+      <div style="margin-bottom:20px;">
+        <label style="display:block;margin-bottom:8px;color:var(--muted);">Address or Location</label>
+        <input type="text" id="nearMeAddress" placeholder="Enter address, intersection, or landmark..." 
+               style="width:100%;padding:12px;border:1px solid #273143;border-radius:8px;background:#0e141d;color:var(--ink);font-size:14px;">
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button id="useCurrentLocation" class="secondary" style="font-size:12px;padding:6px 12px;">📍 Use My Location</button>
+          <button id="geocodeAddress" style="font-size:12px;padding:6px 12px;">🔍 Find Address</button>
+        </div>
+      </div>
+      
+      <div style="margin-bottom:24px;">
+        <label style="display:block;margin-bottom:12px;color:var(--muted);">Distance Range</label>
+        <div style="background:#0e141d;border:1px solid #273143;border-radius:8px;padding:16px;">
+          <input type="range" id="distanceSlider" min="0" max="6" value="2" 
+                 style="width:100%;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:8px;">
+            <span>Close</span>
+            <span id="distanceLabel">20 min walk</span>
+            <span>Far</span>
+          </div>
+          <div style="font-size:11px;color:var(--muted);">
+            <div>🚶‍♂️ Walk: 10min • 20min • 30min</div>
+            <div>🚗 Drive: 1 mile • 2 miles • 3 miles • 5 miles</div>
+          </div>
+        </div>
+      </div>
+      
+      <div style="display:flex;gap:12px;justify-content:flex-end;">
+        <button id="cancelNearMe" class="secondary">Cancel</button>
+        <button id="findNearbyPlaygrounds" disabled>🔍 Find Nearby Playgrounds</button>
+      </div>
+      
+      <div id="nearMeResults" style="margin-top:16px;display:none;">
+        <div style="border-top:1px solid #273143;padding-top:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <strong>Found <span id="nearbyCount">0</span> playgrounds</strong>
+            <button id="showOnMap" class="secondary" style="font-size:12px;padding:4px 8px;">Show on Map</button>
+          </div>
+          <div id="nearbyList" style="max-height:200px;overflow-y:auto;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Import Leaflet and MarkerCluster via script tags -->
   <script src="./node_modules/leaflet/dist/leaflet.js"></script>
   <script src="./node_modules/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
@@ -1285,7 +1337,10 @@
 
     function normalizeLatLon(p) {
       let lat = parseFloat(p.lat), lon = parseFloat(p.lon);
-      if (Math.abs(lat) > 90 || Math.abs(lon) < 90) { const t = lat; lat = lon; lon = t; }
+      // Fix coordinate swap logic - NYC coordinates are roughly lat:40.7, lon:-74
+      if (Math.abs(lat) > 90 || Math.abs(lon) > 180) { 
+        const t = lat; lat = lon; lon = t; 
+      }
       return {lat, lon};
     }
 
@@ -1374,34 +1429,278 @@
       setTimeout(() => showPlaygroundDetails(random.Prop_ID), 500);
     }
 
-    // Find user location
+    // Near Me functionality
+    let nearMeState = {
+      userLocation: null,
+      searchLocation: null,
+      nearbyPlaygrounds: [],
+      distanceKm: 1.6, // Default to 20 min walk (~1.6km)
+      userLocationMarker: null
+    };
+
+    const distanceOptions = [
+      { label: '10 min walk', km: 0.8 },
+      { label: '20 min walk', km: 1.6 },
+      { label: '30 min walk', km: 2.4 },
+      { label: '1 mile', km: 1.6 },
+      { label: '2 miles', km: 3.2 },
+      { label: '3 miles', km: 4.8 },
+      { label: '5 miles', km: 8.0 }
+    ];
+
     function findNearMe() {
+      showNearMeModal();
+    }
+
+    function showNearMeModal() {
+      qs('nearMeModal').style.display = 'block';
+      qs('nearMeAddress').value = '';
+      qs('distanceSlider').value = 2;
+      updateDistanceLabel();
+      qs('nearMeResults').style.display = 'none';
+      qs('findNearbyPlaygrounds').disabled = true;
+    }
+
+    function hideNearMeModal() {
+      qs('nearMeModal').style.display = 'none';
+      if (nearMeState.userLocationMarker) {
+        state.map.removeLayer(nearMeState.userLocationMarker);
+        nearMeState.userLocationMarker = null;
+      }
+    }
+
+    function updateDistanceLabel() {
+      const sliderValue = parseInt(qs('distanceSlider').value);
+      const option = distanceOptions[sliderValue];
+      qs('distanceLabel').textContent = option.label;
+      nearMeState.distanceKm = option.km;
+    }
+
+    async function useCurrentLocation() {
       if (!navigator.geolocation) {
         alert('Geolocation is not supported by this browser.');
         return;
       }
 
+      qs('useCurrentLocation').textContent = '🔄 Getting location...';
+      qs('useCurrentLocation').disabled = true;
+
       navigator.geolocation.getCurrentPosition(
         position => {
           const { latitude, longitude } = position.coords;
-          state.map.flyTo([latitude, longitude], 14);
+          nearMeState.searchLocation = { lat: latitude, lon: longitude };
+          qs('nearMeAddress').value = `${latitude.toFixed(4)}, ${longitude.toFixed(4)} (Your location)`;
+          qs('findNearbyPlaygrounds').disabled = false;
           
-          // Add temporary marker for user location
-          const userMarker = L.marker([latitude, longitude], {
-            icon: L.divIcon({
-              html: '<div style="background-color: #4fd1c5; border: 3px solid white; border-radius: 50%; width: 20px; height: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>',
-              className: 'user-location-marker',
-              iconSize: [20, 20],
-              iconAnchor: [10, 10]
-            })
-          }).addTo(state.map);
-
-          setTimeout(() => state.map.removeLayer(userMarker), 5000);
+          qs('useCurrentLocation').textContent = '📍 Use My Location';
+          qs('useCurrentLocation').disabled = false;
         },
         error => {
           alert('Unable to get your location. Please make sure location services are enabled.');
+          qs('useCurrentLocation').textContent = '📍 Use My Location';
+          qs('useCurrentLocation').disabled = false;
         }
       );
+    }
+
+    async function geocodeAddress() {
+      const address = qs('nearMeAddress').value.trim();
+      if (!address) {
+        alert('Please enter an address first.');
+        return;
+      }
+
+      qs('geocodeAddress').textContent = '🔄 Finding...';
+      qs('geocodeAddress').disabled = true;
+
+      try {
+        // Use Nominatim geocoding service (free, no API key needed)
+        const query = encodeURIComponent(`${address}, New York, NY`);
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1&bounded=1&viewbox=-74.3,40.4,-73.7,40.9`);
+        const results = await response.json();
+
+        if (results.length > 0) {
+          const result = results[0];
+          nearMeState.searchLocation = { 
+            lat: parseFloat(result.lat), 
+            lon: parseFloat(result.lon) 
+          };
+          qs('nearMeAddress').value = result.display_name || address;
+          qs('findNearbyPlaygrounds').disabled = false;
+        } else {
+          alert('Address not found. Please try a different address or use "Use My Location".');
+        }
+      } catch (error) {
+        console.error('Geocoding error:', error);
+        alert('Error finding address. Please try again or use "Use My Location".');
+      }
+
+      qs('geocodeAddress').textContent = '🔍 Find Address';
+      qs('geocodeAddress').disabled = false;
+    }
+
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371; // Earth's radius in kilometers
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c; // Distance in kilometers
+    }
+
+    async function findNearbyPlaygrounds() {
+      if (!nearMeState.searchLocation) {
+        alert('Please set a location first.');
+        return;
+      }
+
+      qs('findNearbyPlaygrounds').textContent = '🔄 Searching...';
+      qs('findNearbyPlaygrounds').disabled = true;
+
+      try {
+        const allPlaygrounds = await playgroundDB.getAllPlaygrounds();
+        console.log(`Searching ${allPlaygrounds.length} playgrounds from location:`, nearMeState.searchLocation);
+        console.log(`Distance threshold: ${nearMeState.distanceKm}km`);
+        
+        const nearby = [];
+        let debugCount = 0;
+
+        for (const playground of allPlaygrounds) {
+          const {lat, lon} = normalizeLatLon(playground);
+          if (lat && lon && !isNaN(lat) && !isNaN(lon)) {
+            const distance = calculateDistance(
+              nearMeState.searchLocation.lat,
+              nearMeState.searchLocation.lon,
+              lat, lon
+            );
+            
+            // Debug first few playgrounds
+            if (debugCount < 3) {
+              console.log(`Playground: ${playground.Name}, coords: ${lat},${lon}, distance: ${distance.toFixed(2)}km`);
+              debugCount++;
+            }
+            
+            if (distance <= nearMeState.distanceKm) {
+              nearby.push({
+                ...playground,
+                distance: distance,
+                distanceText: distance < 1 ? 
+                  `${Math.round(distance * 1000)}m` : 
+                  `${distance.toFixed(1)}km`
+              });
+            }
+          } else if (debugCount < 3) {
+            console.log(`Invalid coordinates for playground: ${playground.Name}, lat: ${lat}, lon: ${lon}`);
+            debugCount++;
+          }
+        }
+
+        console.log(`Found ${nearby.length} nearby playgrounds`);
+        
+        // Sort by distance
+        nearby.sort((a, b) => a.distance - b.distance);
+        nearMeState.nearbyPlaygrounds = nearby;
+
+        displayNearbyResults(nearby);
+      } catch (error) {
+        console.error('Error finding nearby playgrounds:', error);
+        alert('Error searching for nearby playgrounds. Please try again.');
+      }
+
+      qs('findNearbyPlaygrounds').textContent = '🔍 Find Nearby Playgrounds';
+      qs('findNearbyPlaygrounds').disabled = false;
+    }
+
+    function displayNearbyResults(playgrounds) {
+      qs('nearbyCount').textContent = playgrounds.length;
+      qs('nearMeResults').style.display = 'block';
+      
+      if (playgrounds.length === 0) {
+        qs('nearbyList').innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px;">No playgrounds found within the selected distance.</div>';
+        return;
+      }
+
+      const html = playgrounds.map(p => {
+        const accessColor = p.Accessible === 'Yes' ? 'var(--good)' : 
+                           p.Accessible === 'Limited' ? '#f59e0b' : 'var(--bad)';
+        const sensoryIcon = (p['Sensory-Friendly'] || '').toUpperCase() === 'Y' ? '🧸' : '🛝';
+        
+        return `
+          <div style="border:1px solid #273143;border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer;" 
+               onclick="selectNearbyPlayground('${p.Prop_ID}', ${p.distance.toFixed(3)})">
+            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px;">
+              <strong style="font-size:14px;">${sensoryIcon} ${p.Name || 'Unnamed Playground'}</strong>
+              <span style="color:var(--muted);font-size:12px;">${p.distanceText}</span>
+            </div>
+            <div style="color:var(--muted);font-size:12px;">${p.Location || 'Location not specified'}</div>
+            <div style="margin-top:6px;font-size:11px;">
+              <span style="color:${accessColor};">●</span> ${p.Accessible || 'Unknown'} accessibility
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      qs('nearbyList').innerHTML = html;
+    }
+
+    function selectNearbyPlayground(propId, distance) {
+      const playground = nearMeState.nearbyPlaygrounds.find(p => p.Prop_ID === propId);
+      if (playground) {
+        const {lat, lon} = normalizeLatLon(playground);
+        hideNearMeModal();
+        state.map.flyTo([lat, lon], 16);
+        setTimeout(() => showPlaygroundDetails(propId), 500);
+      }
+    }
+
+    function showNearbyOnMap() {
+      if (nearMeState.nearbyPlaygrounds.length === 0) return;
+      
+      hideNearMeModal();
+      
+      // Add location marker if we have search location
+      if (nearMeState.searchLocation && !nearMeState.userLocationMarker) {
+        nearMeState.userLocationMarker = L.marker([nearMeState.searchLocation.lat, nearMeState.searchLocation.lon], {
+          icon: L.divIcon({
+            html: '<div style="background-color: #4fd1c5; border: 3px solid white; border-radius: 50%; width: 20px; height: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>',
+            className: 'user-location-marker',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          })
+        }).addTo(state.map);
+        
+        // Add distance circle to show search radius
+        L.circle([nearMeState.searchLocation.lat, nearMeState.searchLocation.lon], {
+          color: '#4fd1c5',
+          fillColor: '#4fd1c5',
+          fillOpacity: 0.1,
+          weight: 2,
+          radius: nearMeState.distanceKm * 1000 // Convert km to meters
+        }).addTo(state.map);
+      }
+      
+      // Highlight nearby playgrounds by filtering the visible ones
+      const nearbyIds = new Set(nearMeState.nearbyPlaygrounds.map(p => p.Prop_ID));
+      state.filteredPlaygrounds = nearMeState.nearbyPlaygrounds;
+      
+      // Update markers to show only nearby playgrounds
+      addPlaygroundMarkers();
+      
+      // Fit map to show all nearby playgrounds and search location
+      const bounds = L.latLngBounds();
+      bounds.extend([nearMeState.searchLocation.lat, nearMeState.searchLocation.lon]);
+      
+      nearMeState.nearbyPlaygrounds.forEach(p => {
+        const {lat, lon} = normalizeLatLon(p);
+        if (lat && lon) bounds.extend([lat, lon]);
+      });
+      
+      state.map.fitBounds(bounds, { padding: [20, 20] });
+      
+      // Show count in UI
+      qs('count').textContent = `Found ${nearMeState.nearbyPlaygrounds.length} nearby playgrounds`;
     }
 
     // Database management functions
@@ -1542,6 +1841,23 @@
     qs('playgroundSearch').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         searchPlaygrounds();
+      }
+    });
+
+    // Near Me modal event listeners
+    qs('closeNearMe').addEventListener('click', hideNearMeModal);
+    qs('cancelNearMe').addEventListener('click', hideNearMeModal);
+    qs('useCurrentLocation').addEventListener('click', useCurrentLocation);
+    qs('geocodeAddress').addEventListener('click', geocodeAddress);
+    qs('findNearbyPlaygrounds').addEventListener('click', findNearbyPlaygrounds);
+    qs('showOnMap').addEventListener('click', showNearbyOnMap);
+    qs('distanceSlider').addEventListener('input', updateDistanceLabel);
+    qs('nearMeAddress').addEventListener('input', (e) => {
+      qs('findNearbyPlaygrounds').disabled = e.target.value.trim() === '';
+    });
+    qs('nearMeAddress').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !qs('findNearbyPlaygrounds').disabled) {
+        geocodeAddress();
       }
     });
 
