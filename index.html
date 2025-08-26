@@ -230,6 +230,9 @@
   <header class="header">
     <div>
       <h1>NYC Playground Explorer</h1>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">
+        Data sourced from <a href="https://www.nycgovparks.org/facilities/playgrounds" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">NYC Parks Department</a>
+      </div>
     </div>
     
     <div class="controls">
@@ -1043,6 +1046,131 @@
       }
     };
 
+    // Database management functions (favorites, export, stats)
+    async function addToFavorites() {
+      if (!state.currentPlayground) {
+        alert('Please select a playground first!');
+        return;
+      }
+      
+      try {
+        const isAlreadyFavorite = await playgroundDB.isFavorite(state.currentPlayground.id);
+        if (isAlreadyFavorite) {
+          await playgroundDB.removeFromFavorites(state.currentPlayground.id);
+          alert(`${state.currentPlayground.Name} removed from favorites!`);
+        } else {
+          await playgroundDB.addToFavorites(state.currentPlayground.id);
+          alert(`${state.currentPlayground.Name} added to favorites!`);
+        }
+        
+        updateFavoriteButton();
+      } catch (e) {
+        console.error('Error managing favorites:', e);
+        alert('Error managing favorites');
+      }
+    }
+
+    async function viewFavorites() {
+      try {
+        const favorites = await playgroundDB.getFavorites();
+        if (favorites.length === 0) {
+          alert('No favorites yet! Click on playgrounds and add them to your favorites.');
+          return;
+        }
+        
+        const favoritesList = favorites.map(p => 
+          `• ${p.Name} (${boroughFromPropId(p.Prop_ID)})`
+        ).join('\n');
+        
+        alert(`Your Favorite Playgrounds (${favorites.length}):\n\n${favoritesList}`);
+      } catch (e) {
+        console.error('Error viewing favorites:', e);
+        alert('Error loading favorites');
+      }
+    }
+
+    async function exportData() {
+      try {
+        const playgroundData = await playgroundDB.getAllPlaygrounds();
+        const reviewData = await playgroundDB.getAllReviews();
+        
+        const exportPackage = {
+          metadata: {
+            exportDate: new Date().toISOString(),
+            source: "NYC Playground Explorer",
+            dataAttribution: {
+              originalSource: "NYC Department of Parks & Recreation",
+              sourceUrl: "https://www.nycgovparks.org/facilities/playgrounds",
+              note: "Original playground data courtesy of NYC Parks Department"
+            },
+            counts: {
+              playgrounds: playgroundData.length,
+              reviews: reviewData.length
+            }
+          },
+          playgrounds: playgroundData,
+          reviews: reviewData
+        };
+        
+        const data = JSON.stringify(exportPackage, null, 2);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `nyc_playground_data_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert('✅ Data exported successfully with attribution!');
+      } catch (e) {
+        console.error('Error exporting data:', e);
+        alert('Error exporting data');
+      }
+    }
+
+    async function showStats() {
+      try {
+        const playgroundStats = await playgroundDB.getPlaygroundStats();
+        const reviewStats = await playgroundDB.getReviewStats();
+        const favorites = await playgroundDB.getFavorites();
+        
+        alert(`NYC Playground Database Statistics:
+        
+🏗️ Playgrounds: ${playgroundStats.total}
+   ♿ Accessible: ${playgroundStats.accessible} (${playgroundStats.accessiblePercent}%)
+   👶 Sensory-Friendly: ${playgroundStats.sensoryFriendly} (${playgroundStats.sensoryPercent}%)
+   📝 With Reviews: ${playgroundStats.withReviews} (${playgroundStats.reviewedPercent}%)
+
+📝 Reviews: ${reviewStats.total}
+   ⭐ Average Rating: ${reviewStats.avgRating}/5
+   🌟 Featured: ${reviewStats.featured}
+   ✅ Approved: ${reviewStats.approved}
+
+❤️ Your Favorites: ${favorites.length}
+
+📊 Data sourced from NYC Parks Department`);
+      } catch (e) {
+        console.error('Error loading stats:', e);
+        alert('Error loading statistics');
+      }
+    }
+
+    async function resetDatabase() {
+      if (!confirm('⚠️ This will delete ALL playground data and reviews from your browser. Are you sure?')) {
+        return;
+      }
+      
+      try {
+        await playgroundDB.resetDatabase();
+        alert('✅ Database reset successfully! The page will reload to import fresh data.');
+        location.reload();
+      } catch (e) {
+        console.error('Error resetting database:', e);
+        alert('Error resetting database. Try refreshing the page.');
+      }
+    }
+
     // Initialize map
     function initMap() {
       // Create map centered on NYC
@@ -1389,6 +1517,13 @@
     qs('managePlaygrounds').addEventListener('click', () => showManagePlaygroundsModal());
     qs('addReview').addEventListener('click', () => showAddReviewModal());
     qs('manageReviews').addEventListener('click', () => showReviewManager());
+    
+    // Database management event listeners
+    qs('addFavorite').addEventListener('click', () => addToFavorites());
+    qs('viewFavorites').addEventListener('click', () => viewFavorites());
+    qs('exportData').addEventListener('click', () => exportData());
+    qs('showStats').addEventListener('click', () => showStats());
+    qs('resetDatabase').addEventListener('click', () => resetDatabase());
 
     // Review modal event listeners
     qs('closeReviewModal').addEventListener('click', hideAddReviewModal);

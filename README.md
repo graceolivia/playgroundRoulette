@@ -44,3 +44,14 @@ An interactive map-based application to discover and explore NYC playgrounds wit
 - **Database**: Dexie.js (IndexedDB wrapper)
 - **UI**: Custom CSS with dark theme
 - **Data**: NYC Parks Department playground dataset
+
+## Data Attribution
+
+This application uses playground data provided by the **New York City Department of Parks & Recreation**.
+
+- **Data Source**: [NYC Parks Department - Playgrounds](https://www.nycgovparks.org/facilities/playgrounds)
+- **Original Dataset**: NYC Parks playground facilities database
+- **Usage**: Educational and public information purposes
+- **Updates**: Data reflects NYC Parks Department records as of dataset creation date
+
+We gratefully acknowledge NYC Parks for making this valuable public data available.
