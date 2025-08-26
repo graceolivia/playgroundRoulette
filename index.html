@@ -297,7 +297,11 @@
       </div>
       
       <div style="display:flex;flex-direction:column;gap:8px;">
-        <div style="color:var(--muted);font-size:12px;margin-bottom:4px;">Reviews</div>
+        <div style="color:var(--muted);font-size:12px;margin-bottom:4px;">Playgrounds</div>
+        <button id="addPlayground" class="secondary">🏗️ Add Playground</button>
+        <button id="managePlaygrounds" class="secondary">📍 Manage Playgrounds</button>
+        
+        <div style="color:var(--muted);font-size:12px;margin:12px 0 4px;">Reviews</div>
         <button id="addReview" class="secondary">✏️ Add Review</button>
         <button id="manageReviews" class="secondary">📝 Manage Reviews</button>
         
@@ -370,6 +374,116 @@
           <button type="submit" id="saveReview">💾 Save Review</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Add Playground Modal -->
+  <div id="playgroundModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:2000;padding:20px;">
+    <div style="background:var(--panel);border-radius:12px;max-width:700px;margin:30px auto;padding:24px;max-height:85vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h3 style="margin:0;" id="playgroundModalTitle">Add New Playground</h3>
+        <button id="closePlaygroundModal" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:24px;">×</button>
+      </div>
+      
+      <form id="playgroundForm">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+          <div>
+            <label style="display:block;margin-bottom:8px;color:var(--muted);">Property ID *</label>
+            <input type="text" id="playgroundPropId" placeholder="e.g., M001, B042" style="width:100%;padding:10px;border:1px solid #273143;border-radius:8px;background:#0e141d;color:var(--ink);">
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">Borough prefix: M(Manhattan), B(Brooklyn), Q(Queens), X(Bronx), R(Staten Island)</div>
+          </div>
+          <div>
+            <label style="display:block;margin-bottom:8px;color:var(--muted);">Playground ID</label>
+            <input type="text" id="playgroundId" placeholder="Same as Property ID if blank" style="width:100%;padding:10px;border:1px solid #273143;border-radius:8px;background:#0e141d;color:var(--ink);">
+          </div>
+        </div>
+        
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:8px;color:var(--muted);">Playground Name *</label>
+          <input type="text" id="playgroundName" placeholder="Central Park Playground" style="width:100%;padding:10px;border:1px solid #273143;border-radius:8px;background:#0e141d;color:var(--ink);">
+        </div>
+        
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:8px;color:var(--muted);">Location</label>
+          <input type="text" id="playgroundLocation" placeholder="5th Ave & 72nd St" style="width:100%;padding:10px;border:1px solid #273143;border-radius:8px;background:#0e141d;color:var(--ink);">
+        </div>
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+          <div>
+            <label style="display:block;margin-bottom:8px;color:var(--muted);">Latitude *</label>
+            <input type="number" step="any" id="playgroundLat" placeholder="40.7589" style="width:100%;padding:10px;border:1px solid #273143;border-radius:8px;background:#0e141d;color:var(--ink);">
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">NYC range: 40.4 - 40.9</div>
+          </div>
+          <div>
+            <label style="display:block;margin-bottom:8px;color:var(--muted);">Longitude *</label>
+            <input type="number" step="any" id="playgroundLon" placeholder="-73.9851" style="width:100%;padding:10px;border:1px solid #273143;border-radius:8px;background:#0e141d;color:var(--ink);">
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">NYC range: -74.3 to -73.7</div>
+          </div>
+        </div>
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;">
+          <div>
+            <label style="display:block;margin-bottom:8px;color:var(--muted);">Wheelchair Accessible</label>
+            <select id="playgroundAccessible" style="width:100%;padding:10px;border:1px solid #273143;border-radius:8px;background:#0e141d;color:var(--ink);">
+              <option value="Yes">Yes</option>
+              <option value="Limited">Limited</option>
+              <option value="No">No</option>
+              <option value="Unknown">Unknown</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;margin-bottom:8px;color:var(--muted);">Sensory-Friendly</label>
+            <select id="playgroundSensory" style="width:100%;padding:10px;border:1px solid #273143;border-radius:8px;background:#0e141d;color:var(--ink);">
+              <option value="Y">Yes</option>
+              <option value="N">No</option>
+              <option value="">Unknown</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;margin-bottom:8px;color:var(--muted);">ADA Restroom</label>
+            <select id="playgroundRestroom" style="width:100%;padding:10px;border:1px solid #273143;border-radius:8px;background:#0e141d;color:var(--ink);">
+              <option value="Accessible">Accessible</option>
+              <option value="Not Accessible">Not Accessible</option>
+              <option value="Unknown">Unknown</option>
+            </select>
+          </div>
+        </div>
+        
+        <div style="margin-bottom:20px;">
+          <label style="display:block;margin-bottom:8px;color:var(--muted);">Notes</label>
+          <textarea id="playgroundNotes" rows="2" placeholder="Additional information about this playground..." style="width:100%;padding:10px;border:1px solid #273143;border-radius:8px;background:#0e141d;color:var(--ink);resize:vertical;"></textarea>
+        </div>
+        
+        <div id="playgroundErrors" style="display:none;background:#6b2e2e;border:1px solid #a53e3e;border-radius:8px;padding:12px;margin-bottom:16px;">
+          <div style="font-weight:bold;margin-bottom:8px;color:#ffdede;">⚠️ Please fix the following issues:</div>
+          <ul id="playgroundErrorList" style="margin:0;padding-left:20px;color:#ffdede;"></ul>
+        </div>
+        
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button type="button" id="cancelPlayground" class="secondary">Cancel</button>
+          <button type="button" id="savePlayground">💾 Save Playground</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Manage Playgrounds Modal -->
+  <div id="managePlaygroundsModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:2000;padding:20px;">
+    <div style="background:var(--panel);border-radius:12px;max-width:900px;margin:30px auto;padding:24px;max-height:85vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h3 style="margin:0;">📍 Playground Manager</h3>
+        <button id="closeManagePlaygrounds" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:24px;">×</button>
+      </div>
+      
+      <div style="display:flex;gap:12px;margin-bottom:20px;align-items:center;flex-wrap:wrap;">
+        <input type="text" id="playgroundSearch" placeholder="Search playgrounds..." style="flex:1;min-width:200px;padding:10px;border:1px solid #273143;border-radius:8px;background:#0e141d;color:var(--ink);">
+        <button id="searchPlaygrounds" class="secondary">🔍 Search</button>
+        <button id="clearSearch" class="secondary">Clear</button>
+      </div>
+      
+      <div id="playgroundsList" style="max-height:60vh;overflow-y:auto;">
+        <div style="color:var(--muted);text-align:center;padding:40px;">Click search or leave blank to show all playgrounds</div>
+      </div>
     </div>
   </div>
 
@@ -665,6 +779,269 @@
         alert('Error deleting review: ' + e.message);
       }
     }
+
+    // Playground management functions
+    let currentEditingPlayground = null;
+
+    function showAddPlaygroundModal() {
+      currentEditingPlayground = null;
+      qs('playgroundModalTitle').textContent = 'Add New Playground';
+      qs('savePlayground').textContent = '💾 Save Playground';
+      qs('playgroundForm').reset();
+      hidePlaygroundErrors();
+      
+      // Set default values
+      qs('playgroundAccessible').value = 'Yes';
+      qs('playgroundSensory').value = 'Y';
+      qs('playgroundRestroom').value = 'Accessible';
+      
+      qs('playgroundModal').style.display = 'block';
+    }
+
+    function showEditPlaygroundModal(playground) {
+      currentEditingPlayground = playground;
+      qs('playgroundModalTitle').textContent = 'Edit Playground';
+      qs('savePlayground').textContent = '💾 Update Playground';
+      
+      // Populate form with existing data
+      qs('playgroundPropId').value = playground.Prop_ID || '';
+      qs('playgroundId').value = playground.Playground_ID || '';
+      qs('playgroundName').value = playground.Name || '';
+      qs('playgroundLocation').value = playground.Location || '';
+      qs('playgroundLat').value = playground.lat || '';
+      qs('playgroundLon').value = playground.lon || '';
+      qs('playgroundAccessible').value = playground.Accessible || 'Unknown';
+      qs('playgroundSensory').value = playground['Sensory-Friendly'] || 'N';
+      qs('playgroundRestroom').value = playground.ADA_Accessible_Comfort_Station || 'Unknown';
+      qs('playgroundNotes').value = playground.notes || '';
+      
+      hidePlaygroundErrors();
+      qs('playgroundModal').style.display = 'block';
+    }
+
+    function hidePlaygroundModal() {
+      qs('playgroundModal').style.display = 'none';
+      qs('playgroundForm').reset();
+      currentEditingPlayground = null;
+      hidePlaygroundErrors();
+    }
+
+    function showPlaygroundErrors(errors) {
+      const errorList = qs('playgroundErrorList');
+      errorList.innerHTML = errors.map(error => `<li>${error}</li>`).join('');
+      qs('playgroundErrors').style.display = 'block';
+    }
+
+    function hidePlaygroundErrors() {
+      qs('playgroundErrors').style.display = 'none';
+    }
+
+    async function savePlayground() {
+      const formData = {
+        Prop_ID: qs('playgroundPropId').value.trim().toUpperCase(),
+        Playground_ID: qs('playgroundId').value.trim() || qs('playgroundPropId').value.trim().toUpperCase(),
+        Name: qs('playgroundName').value.trim(),
+        Location: qs('playgroundLocation').value.trim(),
+        lat: qs('playgroundLat').value,
+        lon: qs('playgroundLon').value,
+        Accessible: qs('playgroundAccessible').value,
+        'Sensory-Friendly': qs('playgroundSensory').value,
+        ADA_Accessible_Comfort_Station: qs('playgroundRestroom').value,
+        notes: qs('playgroundNotes').value.trim()
+      };
+
+      try {
+        let errors = [];
+        
+        if (currentEditingPlayground) {
+          // For editing, skip duplicate check if same playground
+          if (formData.Prop_ID !== currentEditingPlayground.Prop_ID) {
+            const existing = await playgroundDB.getPlaygroundByPropId(formData.Prop_ID);
+            if (existing) {
+              errors.push('A playground with this Property ID already exists');
+            }
+          }
+          
+          // Basic validation
+          if (!formData.Prop_ID) errors.push('Property ID is required');
+          if (!formData.Name) errors.push('Playground name is required');
+          if (!formData.lat || !formData.lon) {
+            errors.push('Latitude and longitude are required');
+          } else {
+            const lat = parseFloat(formData.lat);
+            const lon = parseFloat(formData.lon);
+            if (isNaN(lat) || lat < -90 || lat > 90) {
+              errors.push('Invalid latitude (must be between -90 and 90)');
+            }
+            if (isNaN(lon) || lon < -180 || lon > 180) {
+              errors.push('Invalid longitude (must be between -180 and 180)');
+            }
+            if (lat < 40.4 || lat > 40.9 || lon < -74.3 || lon > -73.7) {
+              errors.push('Coordinates should be in NYC area (lat: 40.4-40.9, lon: -74.3 to -73.7)');
+            }
+          }
+        } else {
+          // For new playgrounds, use full validation
+          errors = await playgroundDB.validatePlayground(formData);
+        }
+
+        if (errors.length > 0) {
+          showPlaygroundErrors(errors);
+          return;
+        }
+
+        if (currentEditingPlayground) {
+          // Update existing playground
+          await playgroundDB.updatePlayground(currentEditingPlayground.id, formData);
+          alert('✅ Playground updated successfully!');
+        } else {
+          // Add new playground
+          await playgroundDB.addPlayground(formData);
+          alert('✅ Playground added successfully!');
+        }
+
+        hidePlaygroundModal();
+        
+        // Refresh the map and data
+        await refreshPlaygroundData();
+        
+      } catch (e) {
+        console.error('Error saving playground:', e);
+        alert('❌ Error saving playground: ' + e.message);
+      }
+    }
+
+    async function refreshPlaygroundData() {
+      try {
+        state.playgrounds = await playgroundDB.getAllPlaygrounds();
+        state.filteredPlaygrounds = [...state.playgrounds];
+        addPlaygroundMarkers();
+        qs('count').textContent = `${state.playgrounds.length} playgrounds`;
+      } catch (e) {
+        console.error('Error refreshing playground data:', e);
+      }
+    }
+
+    function showManagePlaygroundsModal() {
+      qs('managePlaygroundsModal').style.display = 'block';
+      qs('playgroundSearch').value = '';
+      qs('playgroundsList').innerHTML = '<div style="color:var(--muted);text-align:center;padding:40px;">Click search or leave blank to show all playgrounds</div>';
+    }
+
+    function hideManagePlaygroundsModal() {
+      qs('managePlaygroundsModal').style.display = 'none';
+    }
+
+    async function searchPlaygrounds() {
+      const searchTerm = qs('playgroundSearch').value.trim();
+      const listContainer = qs('playgroundsList');
+      
+      try {
+        let playgrounds;
+        if (searchTerm === '') {
+          playgrounds = state.playgrounds;
+        } else {
+          playgrounds = await playgroundDB.searchPlaygroundsAdmin(searchTerm);
+        }
+
+        if (playgrounds.length === 0) {
+          listContainer.innerHTML = '<div style="color:var(--muted);text-align:center;padding:40px;">No playgrounds found</div>';
+          return;
+        }
+
+        const playgroundsHtml = playgrounds.map(playground => {
+          const borough = boroughFromPropId(playground.Prop_ID);
+          const access = normalizeAccessible(playground.Accessible);
+          const sensory = (playground['Sensory-Friendly'] || '').toUpperCase();
+          
+          return `
+            <div style="border:1px solid #2a3547;border-radius:8px;padding:12px;margin-bottom:12px;background:#0e141d;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+                <div>
+                  <h4 style="margin:0;font-size:16px;color:var(--ink);">${playground.Name}</h4>
+                  <div style="font-size:12px;color:var(--muted);margin-top:4px;">
+                    ID: ${playground.Prop_ID} • ${borough}
+                  </div>
+                  <div style="font-size:12px;color:var(--muted);">
+                    ${playground.Location || 'No location specified'}
+                  </div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <button onclick="editPlayground('${playground.Prop_ID}')" style="background:var(--accent);color:#071019;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;">Edit</button>
+                  <button onclick="deletePlaygroundConfirm('${playground.Prop_ID}')" style="background:#6b2e2e;color:#ffdede;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;">Delete</button>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+                <span class="chip ${access === 'Yes' ? 'ok' : 'no'}">♿ ${access}</span>
+                <span class="chip ${sensory === 'Y' ? 'ok' : 'no'}">👶 ${sensory === 'Y' ? 'Sensory-Friendly' : 'Regular'}</span>
+                <span class="chip">📍 ${playground.lat?.toFixed(4)}, ${playground.lon?.toFixed(4)}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        listContainer.innerHTML = `
+          <div style="margin-bottom:12px;color:var(--muted);font-size:14px;">
+            Found ${playgrounds.length} playground${playgrounds.length === 1 ? '' : 's'}
+          </div>
+          ${playgroundsHtml}
+        `;
+
+      } catch (e) {
+        console.error('Error searching playgrounds:', e);
+        listContainer.innerHTML = '<div style="color:var(--bad);text-align:center;padding:40px;">Error loading playgrounds</div>';
+      }
+    }
+
+    async function clearPlaygroundSearch() {
+      qs('playgroundSearch').value = '';
+      await searchPlaygrounds();
+    }
+
+    window.editPlayground = async function(propId) {
+      try {
+        const playground = await playgroundDB.getPlaygroundByPropId(propId);
+        if (!playground) {
+          alert('Playground not found');
+          return;
+        }
+        hideManagePlaygroundsModal();
+        showEditPlaygroundModal(playground);
+      } catch (e) {
+        console.error('Error loading playground for edit:', e);
+        alert('Error loading playground: ' + e.message);
+      }
+    };
+
+    window.deletePlaygroundConfirm = async function(propId) {
+      try {
+        const playground = await playgroundDB.getPlaygroundByPropId(propId);
+        if (!playground) {
+          alert('Playground not found');
+          return;
+        }
+
+        const reviewCount = (await playgroundDB.getReviewsForPlayground(propId)).length;
+        let message = `Delete "${playground.Name}"?`;
+        if (reviewCount > 0) {
+          message += `\n\nThis will also delete ${reviewCount} associated review${reviewCount === 1 ? '' : 's'}.`;
+        }
+        message += '\n\nThis action cannot be undone.';
+
+        if (!confirm(message)) return;
+
+        await playgroundDB.deletePlayground(playground.id);
+        alert('✅ Playground deleted successfully');
+        
+        // Refresh both the management interface and the map
+        await searchPlaygrounds();
+        await refreshPlaygroundData();
+
+      } catch (e) {
+        console.error('Error deleting playground:', e);
+        alert('❌ Error deleting playground: ' + e.message);
+      }
+    };
 
     // Initialize map
     function initMap() {
@@ -1008,6 +1385,8 @@
     // Admin panel event listeners
     qs('adminClose').addEventListener('click', () => toggleAdminMode());
     qs('adminLogout').addEventListener('click', () => logoutAdmin());
+    qs('addPlayground').addEventListener('click', () => showAddPlaygroundModal());
+    qs('managePlaygrounds').addEventListener('click', () => showManagePlaygroundsModal());
     qs('addReview').addEventListener('click', () => showAddReviewModal());
     qs('manageReviews').addEventListener('click', () => showReviewManager());
 
@@ -1015,6 +1394,21 @@
     qs('closeReviewModal').addEventListener('click', hideAddReviewModal);
     qs('cancelReview').addEventListener('click', hideAddReviewModal);
     qs('saveReview').addEventListener('click', saveReview);
+
+    // Playground modal event listeners
+    qs('closePlaygroundModal').addEventListener('click', hidePlaygroundModal);
+    qs('cancelPlayground').addEventListener('click', hidePlaygroundModal);
+    qs('savePlayground').addEventListener('click', savePlayground);
+
+    // Playground management event listeners
+    qs('closeManagePlaygrounds').addEventListener('click', hideManagePlaygroundsModal);
+    qs('searchPlaygrounds').addEventListener('click', searchPlaygrounds);
+    qs('clearSearch').addEventListener('click', clearPlaygroundSearch);
+    qs('playgroundSearch').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        searchPlaygrounds();
+      }
+    });
 
     // Star rating event listeners
     document.querySelectorAll('.star-rating').forEach(star => {

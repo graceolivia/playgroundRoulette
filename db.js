@@ -285,6 +285,114 @@ class PlaygroundDatabase {
       .reverse()
       .sortBy('date');
   }
+
+  // Playground management methods
+  async addPlayground(playgroundData) {
+    const playground = {
+      Prop_ID: playgroundData.Prop_ID,
+      Playground_ID: playgroundData.Playground_ID || playgroundData.Prop_ID,
+      Name: playgroundData.Name,
+      Location: playgroundData.Location,
+      Accessible: playgroundData.Accessible || 'Unknown',
+      lat: parseFloat(playgroundData.lat),
+      lon: parseFloat(playgroundData.lon),
+      'Sensory-Friendly': playgroundData['Sensory-Friendly'] || 'N',
+      ADA_Accessible_Comfort_Station: playgroundData.ADA_Accessible_Comfort_Station || 'Unknown',
+      slug: playgroundData.slug || null,
+      added_date: new Date().toISOString(),
+      added_by: 'admin'
+    };
+    return await this.db.playgrounds.add(playground);
+  }
+
+  async updatePlayground(playgroundId, updates) {
+    updates.modified_date = new Date().toISOString();
+    updates.modified_by = 'admin';
+    return await this.db.playgrounds.update(playgroundId, updates);
+  }
+
+  async deletePlayground(playgroundId) {
+    // Also delete associated reviews
+    await this.db.reviews.where('playground_prop_id').equals(playgroundId).delete();
+    return await this.db.playgrounds.delete(playgroundId);
+  }
+
+  async getPlaygroundByPropId(propId) {
+    return await this.db.playgrounds.where('Prop_ID').equals(propId).first();
+  }
+
+  async searchPlaygroundsAdmin(searchTerm) {
+    const term = searchTerm.toLowerCase();
+    return await this.db.playgrounds
+      .filter(playground => 
+        (playground.Name || '').toLowerCase().includes(term) ||
+        (playground.Location || '').toLowerCase().includes(term) ||
+        (playground.Prop_ID || '').toLowerCase().includes(term)
+      )
+      .toArray();
+  }
+
+  async validatePlayground(playgroundData) {
+    const errors = [];
+    
+    if (!playgroundData.Prop_ID || playgroundData.Prop_ID.trim() === '') {
+      errors.push('Property ID is required');
+    }
+    
+    if (!playgroundData.Name || playgroundData.Name.trim() === '') {
+      errors.push('Playground name is required');
+    }
+    
+    if (!playgroundData.lat || !playgroundData.lon) {
+      errors.push('Latitude and longitude are required');
+    } else {
+      const lat = parseFloat(playgroundData.lat);
+      const lon = parseFloat(playgroundData.lon);
+      
+      if (isNaN(lat) || lat < -90 || lat > 90) {
+        errors.push('Invalid latitude (must be between -90 and 90)');
+      }
+      
+      if (isNaN(lon) || lon < -180 || lon > 180) {
+        errors.push('Invalid longitude (must be between -180 and 180)');
+      }
+      
+      // Check if coordinates are roughly in NYC area
+      if (lat < 40.4 || lat > 40.9 || lon < -74.3 || lon > -73.7) {
+        errors.push('Coordinates should be in NYC area (lat: 40.4-40.9, lon: -74.3 to -73.7)');
+      }
+    }
+    
+    // Check for duplicate Prop_ID
+    const existing = await this.getPlaygroundByPropId(playgroundData.Prop_ID);
+    if (existing) {
+      errors.push('A playground with this Property ID already exists');
+    }
+    
+    return errors;
+  }
+
+  async getPlaygroundStats() {
+    const total = await this.db.playgrounds.count();
+    const accessible = await this.db.playgrounds.where('Accessible').equals('Yes').count();
+    const sensoryFriendly = await this.db.playgrounds.where('Sensory-Friendly').equals('Y').count();
+    const withReviews = await this.db.playgrounds.toArray().then(playgrounds => {
+      return Promise.all(playgrounds.map(async p => {
+        const reviews = await this.getReviewsForPlayground(p.Prop_ID);
+        return reviews.length > 0;
+      }));
+    }).then(results => results.filter(Boolean).length);
+
+    return {
+      total,
+      accessible,
+      sensoryFriendly,
+      withReviews,
+      accessiblePercent: total > 0 ? Math.round((accessible / total) * 100) : 0,
+      sensoryPercent: total > 0 ? Math.round((sensoryFriendly / total) * 100) : 0,
+      reviewedPercent: total > 0 ? Math.round((withReviews / total) * 100) : 0
+    };
+  }
 }
 
 // Export singleton instance
