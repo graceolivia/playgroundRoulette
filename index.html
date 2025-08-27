@@ -406,6 +406,7 @@
         <div style="color:var(--muted);font-size:12px;margin-bottom:4px;">Playgrounds</div>
         <button id="addPlayground" class="secondary">🏗️ Add Playground</button>
         <button id="managePlaygrounds" class="secondary">📍 Manage Playgrounds</button>
+        <button id="editPlaygroundInfo" class="secondary">📝 Edit Playground Info</button>
         
         <div style="color:var(--muted);font-size:12px;margin:12px 0 4px;">Reviews</div>
         <button id="addReview" class="secondary">✏️ Add Review</button>
@@ -644,6 +645,171 @@
         </div>
       </div>
     </div>
+    </div>
+  </div>
+
+  <!-- Playground Info Editor Modal -->
+  <div id="playgroundInfoModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:2000;padding:20px;">
+    <div style="background:var(--panel);border-radius:12px;max-width:800px;margin:20px auto;padding:24px;max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h3 style="margin:0;">📝 Edit Playground Information</h3>
+        <button id="closePlaygroundInfo" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:24px;">×</button>
+      </div>
+      
+      <!-- Playground Selection -->
+      <div style="margin-bottom:20px;padding:16px;border:1px solid #273143;border-radius:8px;background:#0e141d;">
+        <div style="display:flex;gap:12px;margin-bottom:12px;align-items:center;flex-wrap:wrap;">
+          <input type="text" id="playgroundInfoSearch" placeholder="Search playgrounds..." 
+                 style="flex:1;min-width:200px;padding:8px 12px;border:1px solid #273143;border-radius:6px;background:#121821;color:var(--ink);font-size:14px;">
+          <button id="searchPlaygroundInfo" class="secondary" style="padding:8px 16px;font-size:14px;">🔍 Search</button>
+        </div>
+        <select id="playgroundInfoSelect" style="width:100%;padding:12px;border:1px solid #273143;border-radius:8px;background:#121821;color:var(--ink);font-size:14px;">
+          <option value="">Select a playground to edit...</option>
+        </select>
+      </div>
+
+      <!-- Info Form -->
+      <form id="playgroundInfoForm" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+          <!-- Left Column -->
+          <div>
+            <h4 style="margin:0 0 12px 0;color:var(--accent);">Basic Info</h4>
+            
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:8px;color:var(--muted);">Age Range</label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="number" id="ageRangeMin" placeholder="Min" min="0" max="18" 
+                       style="flex:1;padding:8px;border:1px solid #273143;border-radius:6px;background:#121821;color:var(--ink);">
+                <span style="color:var(--muted);">to</span>
+                <input type="number" id="ageRangeMax" placeholder="Max" min="0" max="18" 
+                       style="flex:1;padding:8px;border:1px solid #273143;border-radius:6px;background:#121821;color:var(--ink);">
+                <span style="color:var(--muted);font-size:12px;">years</span>
+              </div>
+            </div>
+
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:8px;color:var(--muted);">Star Rating</label>
+              <select id="starRating" style="width:100%;padding:8px;border:1px solid #273143;border-radius:6px;background:#121821;color:var(--ink);">
+                <option value="">Not rated</option>
+                <option value="1">⭐ 1 star</option>
+                <option value="2">⭐⭐ 2 stars</option>
+                <option value="3">⭐⭐⭐ 3 stars</option>
+                <option value="4">⭐⭐⭐⭐ 4 stars</option>
+                <option value="5">⭐⭐⭐⭐⭐ 5 stars</option>
+              </select>
+            </div>
+
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:8px;color:var(--muted);">Shade</label>
+              <select id="shadeLevel" style="width:100%;padding:8px;border:1px solid #273143;border-radius:6px;background:#121821;color:var(--ink);">
+                <option value="unknown">Unknown</option>
+                <option value="none">No shade</option>
+                <option value="partial">Partial shade</option>
+                <option value="full">Full shade</option>
+              </select>
+            </div>
+
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:8px;color:var(--muted);">Fenced</label>
+              <select id="fencedStatus" style="width:100%;padding:8px;border:1px solid #273143;border-radius:6px;background:#121821;color:var(--ink);">
+                <option value="unknown">Unknown</option>
+                <option value="yes">Yes - fully fenced</option>
+                <option value="partial">Partially fenced</option>
+                <option value="no">No fence</option>
+              </select>
+            </div>
+
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:8px;color:var(--muted);">Surface</label>
+              <select id="surfaceType" style="width:100%;padding:8px;border:1px solid #273143;border-radius:6px;background:#121821;color:var(--ink);">
+                <option value="unknown">Unknown</option>
+                <option value="rubber">Rubber/Soft surface</option>
+                <option value="mulch">Wood chips/Mulch</option>
+                <option value="sand">Sand</option>
+                <option value="grass">Grass</option>
+                <option value="concrete">Concrete/Hard surface</option>
+                <option value="mixed">Mixed surfaces</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Right Column -->
+          <div>
+            <h4 style="margin:0 0 12px 0;color:var(--accent);">Amenities</h4>
+            
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:8px;color:var(--muted);">Water Play</label>
+              <select id="waterPlay" style="width:100%;padding:8px;border:1px solid #273143;border-radius:6px;background:#121821;color:var(--ink);">
+                <option value="unknown">Unknown</option>
+                <option value="yes">Yes - water features</option>
+                <option value="seasonal">Seasonal water play</option>
+                <option value="no">No water play</option>
+              </select>
+            </div>
+
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:8px;color:var(--muted);">Bathroom</label>
+              <select id="bathroomAccess" style="width:100%;padding:8px;border:1px solid #273143;border-radius:6px;background:#121821;color:var(--ink);">
+                <option value="unknown">Unknown</option>
+                <option value="onsite">On-site bathroom</option>
+                <option value="nearby">Nearby (within 2 blocks)</option>
+                <option value="none">No nearby bathroom</option>
+              </select>
+            </div>
+
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:8px;color:var(--muted);">Drinking Fountain</label>
+              <select id="drinkingFountain" style="width:100%;padding:8px;border:1px solid #273143;border-radius:6px;background:#121821;color:var(--ink);">
+                <option value="unknown">Unknown</option>
+                <option value="yes">Yes - working fountain</option>
+                <option value="broken">Present but broken</option>
+                <option value="no">No drinking fountain</option>
+              </select>
+            </div>
+
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:8px;color:var(--muted);">Seating</label>
+              <select id="seatingAvailable" style="width:100%;padding:8px;border:1px solid #273143;border-radius:6px;background:#121821;color:var(--ink);">
+                <option value="unknown">Unknown</option>
+                <option value="plenty">Plenty of seating</option>
+                <option value="some">Some benches</option>
+                <option value="limited">Very limited seating</option>
+                <option value="none">No seating</option>
+              </select>
+            </div>
+
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:8px;color:var(--muted);">Typical Crowd Level</label>
+              <select id="crowdLevel" style="width:100%;padding:8px;border:1px solid #273143;border-radius:6px;background:#121821;color:var(--ink);">
+                <option value="unknown">Unknown</option>
+                <option value="quiet">Usually quiet</option>
+                <option value="moderate">Moderately busy</option>
+                <option value="busy">Usually busy</option>
+                <option value="very_busy">Very crowded</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Full-width fields -->
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:8px;color:var(--muted);">Special Features / Novelty Items</label>
+          <textarea id="noveltyNotes" placeholder="Describe any special or unique features..." 
+                    style="width:100%;padding:12px;border:1px solid #273143;border-radius:6px;background:#121821;color:var(--ink);font-family:inherit;resize:vertical;min-height:60px;"></textarea>
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:8px;color:var(--muted);">Editor Notes</label>
+          <textarea id="editorNotes" placeholder="Internal notes, observations, updates needed..." 
+                    style="width:100%;padding:12px;border:1px solid #273143;border-radius:6px;background:#121821;color:var(--ink);font-family:inherit;resize:vertical;min-height:60px;"></textarea>
+        </div>
+
+        <!-- Action buttons -->
+        <div style="display:flex;gap:12px;justify-content:flex-end;border-top:1px solid #273143;padding-top:20px;">
+          <button type="button" id="cancelPlaygroundInfo" class="secondary">Cancel</button>
+          <button type="submit" id="savePlaygroundInfo">💾 Save Changes</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -1427,6 +1593,162 @@
     // Make test function available globally for console access
     window.testPlaygroundInfo = testPlaygroundInfo;
 
+    // Playground Info Editor Functions
+    let currentEditingPlaygroundInfo = null;
+
+    function showPlaygroundInfoEditor() {
+      qs('playgroundInfoModal').style.display = 'block';
+      loadPlaygroundsForInfoEdit();
+      resetInfoForm();
+    }
+
+    function hidePlaygroundInfoEditor() {
+      qs('playgroundInfoModal').style.display = 'none';
+      qs('playgroundInfoForm').style.display = 'none';
+      currentEditingPlaygroundInfo = null;
+      resetInfoForm();
+    }
+
+    async function loadPlaygroundsForInfoEdit() {
+      try {
+        const playgrounds = await playgroundDB.getAllPlaygrounds();
+        const select = qs('playgroundInfoSelect');
+        select.innerHTML = '<option value="">Select a playground to edit...</option>';
+        
+        playgrounds.forEach(playground => {
+          const option = document.createElement('option');
+          option.value = playground.id;
+          option.textContent = `${playground.Name || 'Unnamed'} - ${playground.Location || 'No location'}`;
+          select.appendChild(option);
+        });
+      } catch (e) {
+        console.error('Error loading playgrounds for info edit:', e);
+        alert('Error loading playgrounds. Please try again.');
+      }
+    }
+
+    async function searchPlaygroundsForInfoEdit() {
+      const searchTerm = qs('playgroundInfoSearch').value.trim().toLowerCase();
+      if (!searchTerm) {
+        loadPlaygroundsForInfoEdit();
+        return;
+      }
+
+      try {
+        const playgrounds = await playgroundDB.searchPlaygroundsAdmin(searchTerm);
+        const select = qs('playgroundInfoSelect');
+        select.innerHTML = '<option value="">Select a playground to edit...</option>';
+        
+        playgrounds.forEach(playground => {
+          const option = document.createElement('option');
+          option.value = playground.id;
+          option.textContent = `${playground.Name || 'Unnamed'} - ${playground.Location || 'No location'}`;
+          select.appendChild(option);
+        });
+      } catch (e) {
+        console.error('Error searching playgrounds for info edit:', e);
+        alert('Error searching playgrounds. Please try again.');
+      }
+    }
+
+    async function selectPlaygroundForInfoEdit() {
+      const playgroundId = qs('playgroundInfoSelect').value;
+      if (!playgroundId) {
+        qs('playgroundInfoForm').style.display = 'none';
+        return;
+      }
+
+      try {
+        const playground = await playgroundDB.getPlaygroundById(parseInt(playgroundId));
+        if (!playground) {
+          alert('Playground not found');
+          return;
+        }
+
+        currentEditingPlaygroundInfo = playground;
+        populateInfoForm(playground);
+        qs('playgroundInfoForm').style.display = 'block';
+      } catch (e) {
+        console.error('Error loading playground info:', e);
+        alert('Error loading playground information. Please try again.');
+      }
+    }
+
+    function populateInfoForm(playground) {
+      // Basic info
+      qs('ageRangeMin').value = playground.age_range_min || '';
+      qs('ageRangeMax').value = playground.age_range_max || '';
+      qs('starRating').value = playground.star || '';
+      qs('shadeLevel').value = playground.shade || 'unknown';
+      qs('fencedStatus').value = playground.fenced || 'unknown';
+      qs('surfaceType').value = playground.surface || 'unknown';
+
+      // Amenities
+      qs('waterPlay').value = playground.water_play || 'unknown';
+      qs('bathroomAccess').value = playground.bathroom || 'unknown';
+      qs('drinkingFountain').value = playground.drinking_fountain || 'unknown';
+      qs('seatingAvailable').value = playground.seating || 'unknown';
+      qs('crowdLevel').value = playground.crowd_level || 'unknown';
+
+      // Notes
+      qs('noveltyNotes').value = playground.novelty_notes || '';
+      qs('editorNotes').value = playground.editor_notes || '';
+    }
+
+    function resetInfoForm() {
+      qs('playgroundInfoForm').reset();
+      qs('playgroundInfoSelect').value = '';
+      qs('playgroundInfoSearch').value = '';
+    }
+
+    async function savePlaygroundInfo(event) {
+      event.preventDefault();
+      
+      if (!currentEditingPlaygroundInfo) {
+        alert('No playground selected for editing');
+        return;
+      }
+
+      const updates = {
+        age_range_min: qs('ageRangeMin').value ? parseInt(qs('ageRangeMin').value) : null,
+        age_range_max: qs('ageRangeMax').value ? parseInt(qs('ageRangeMax').value) : null,
+        star: qs('starRating').value ? parseInt(qs('starRating').value) : null,
+        shade: qs('shadeLevel').value,
+        fenced: qs('fencedStatus').value,
+        surface: qs('surfaceType').value,
+        water_play: qs('waterPlay').value,
+        bathroom: qs('bathroomAccess').value,
+        drinking_fountain: qs('drinkingFountain').value,
+        seating: qs('seatingAvailable').value,
+        crowd_level: qs('crowdLevel').value,
+        novelty_notes: qs('noveltyNotes').value.trim() || null,
+        editor_notes: qs('editorNotes').value.trim() || null
+      };
+
+      try {
+        // Use updatePlaygroundInfo if available, otherwise use updatePlayground
+        if (typeof playgroundDB.updatePlaygroundInfo === 'function') {
+          await playgroundDB.updatePlaygroundInfo(currentEditingPlaygroundInfo.id, updates);
+        } else {
+          // Fallback to basic update method
+          await playgroundDB.updatePlayground(currentEditingPlaygroundInfo.id, {
+            ...updates,
+            last_verified: new Date().toISOString(),
+            schema_version: 2
+          });
+        }
+
+        alert('✅ Playground information updated successfully!');
+        hidePlaygroundInfoEditor();
+        
+        // Refresh playground data
+        await refreshPlaygroundData();
+      } catch (e) {
+        console.error('Error saving playground info:', e);
+        alert('Error saving playground information: ' + e.message);
+      }
+    }
+
     async function resetDatabase() {
       if (!confirm('⚠️ This will delete ALL playground data and reviews from your browser. Are you sure?')) {
         return;
@@ -1505,7 +1827,7 @@
             <span class="chip ${sensory === 'Y' ? 'ok' : 'no'}">👶 ${sensory === 'Y' ? 'Sensory-Friendly' : 'Regular'}</span>
           </div>
           <div style="margin-top: 8px;">
-            <button onclick="showPlaygroundDetails('${playground.Prop_ID}')" style="background: var(--accent); color: #071019; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">View Details</button>
+            <button onclick="showPlaygroundDetails('${playground.Playground_ID}')" style="background: var(--accent); color: #071019; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">View Details</button>
           </div>
         </div>
       `;
@@ -1530,7 +1852,7 @@
         marker.bindPopup(createPopupContent(playground));
         
         marker.on('click', () => {
-          showPlaygroundDetails(playground.Prop_ID);
+          showPlaygroundDetails(playground.Playground_ID);
         });
 
         state.markers.push({ marker, playground });
@@ -1565,8 +1887,8 @@
     }
 
     // Show playground details in panel
-    window.showPlaygroundDetails = function(propId) {
-      const playground = state.playgrounds.find(p => p.Prop_ID === propId);
+    window.showPlaygroundDetails = function(playgroundId) {
+      const playground = state.playgrounds.find(p => p.Playground_ID === playgroundId);
       if (!playground) return;
 
       state.currentPlayground = playground;
@@ -1579,6 +1901,9 @@
       qs('detailsTitle').textContent = playground.Name;
       qs('detailsLocation').textContent = playground.Location || '';
       
+      // Build extended info HTML
+      let extendedInfoHTML = buildExtendedInfoHTML(playground);
+      
       qs('detailsInfo').innerHTML = `
         <div style="margin-bottom: 16px;">
           <span class="chip">${borough}</span>
@@ -1586,6 +1911,7 @@
           <span class="chip ${sensory === 'Y' ? 'ok' : 'no'}">👶 Sensory-Friendly: ${sensory || '?'}</span>
           <span class="chip">ID: ${playground.Playground_ID || playground.Prop_ID}</span>
         </div>
+        ${extendedInfoHTML}
         <p style="margin: 0 0 16px 0;">
           <a href="${gmapLink}" target="_blank" rel="noopener" style="color: var(--accent); text-decoration: none;">🗺️ Open in Google Maps ↗</a>
         </p>
@@ -1638,6 +1964,199 @@
       addPlaygroundMarkers();
     }
 
+    // Build extended playground information HTML (only show if data exists)
+    function buildExtendedInfoHTML(playground) {
+      let sections = [];
+      
+      // Helper function to check if a value is meaningful (not null, undefined, empty, or "unknown")
+      const hasValue = (val) => val !== null && val !== undefined && val !== '' && val !== 'unknown';
+      
+      // Helper function to format display values
+      const formatValue = (val) => {
+        if (val === 'yes') return 'Yes';
+        if (val === 'no') return 'No';
+        if (val === 'partial') return 'Partial';
+        return val;
+      };
+
+      // Basic Info Section
+      let basicInfo = [];
+      
+      // Age Range
+      if (hasValue(playground.age_range_min) || hasValue(playground.age_range_max)) {
+        let ageText = '👶 Ages: ';
+        if (hasValue(playground.age_range_min) && hasValue(playground.age_range_max)) {
+          ageText += `${playground.age_range_min}-${playground.age_range_max} years`;
+        } else if (hasValue(playground.age_range_min)) {
+          ageText += `${playground.age_range_min}+ years`;
+        } else if (hasValue(playground.age_range_max)) {
+          ageText += `up to ${playground.age_range_max} years`;
+        }
+        basicInfo.push(ageText);
+      }
+
+      // Star Rating
+      if (hasValue(playground.star)) {
+        const stars = '⭐'.repeat(playground.star);
+        basicInfo.push(`${stars} ${playground.star}/5`);
+      }
+
+      // Surface
+      if (hasValue(playground.surface)) {
+        const surfaceMap = {
+          'rubber': '🛡️ Rubber surface',
+          'mulch': '🌿 Wood chips',
+          'sand': '🏖️ Sand',
+          'grass': '🌱 Grass',
+          'concrete': '🏗️ Hard surface',
+          'mixed': '🔄 Mixed surfaces'
+        };
+        basicInfo.push(surfaceMap[playground.surface] || `🏗️ ${formatValue(playground.surface)} surface`);
+      }
+
+      if (basicInfo.length > 0) {
+        sections.push(`
+          <div style="margin-bottom: 16px;">
+            <h4 style="margin: 0 0 8px 0; color: var(--accent); font-size: 14px;">Playground Info</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+              ${basicInfo.map(info => `<span class="chip">${info}</span>`).join('')}
+            </div>
+          </div>
+        `);
+      }
+
+      // Features Section
+      let features = [];
+      
+      if (hasValue(playground.shade)) {
+        const shadeMap = {
+          'none': '☀️ No shade',
+          'partial': '⛅ Some shade',
+          'full': '🌳 Good shade'
+        };
+        features.push(shadeMap[playground.shade] || `🌳 ${formatValue(playground.shade)} shade`);
+      }
+
+      if (hasValue(playground.fenced)) {
+        const fenceMap = {
+          'yes': '🚪 Fully fenced',
+          'partial': '🚧 Partially fenced',
+          'no': '🔓 Not fenced'
+        };
+        features.push(fenceMap[playground.fenced] || `🚪 ${formatValue(playground.fenced)} fenced`);
+      }
+
+      if (hasValue(playground.water_play)) {
+        const waterMap = {
+          'yes': '💦 Water play',
+          'seasonal': '🌊 Seasonal water',
+          'no': ''  // Don't show if no water play
+        };
+        if (waterMap[playground.water_play]) {
+          features.push(waterMap[playground.water_play]);
+        }
+      }
+
+      if (features.length > 0) {
+        sections.push(`
+          <div style="margin-bottom: 16px;">
+            <h4 style="margin: 0 0 8px 0; color: var(--accent); font-size: 14px;">Features</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+              ${features.map(feature => `<span class="chip ok">${feature}</span>`).join('')}
+            </div>
+          </div>
+        `);
+      }
+
+      // Amenities Section
+      let amenities = [];
+
+      if (hasValue(playground.bathroom)) {
+        const bathroomMap = {
+          'onsite': '🚻 Bathroom on-site',
+          'nearby': '🚻 Bathroom nearby',
+          'none': ''  // Don't show if no bathroom
+        };
+        if (bathroomMap[playground.bathroom]) {
+          amenities.push(bathroomMap[playground.bathroom]);
+        }
+      }
+
+      if (hasValue(playground.drinking_fountain)) {
+        const fountainMap = {
+          'yes': '🚰 Drinking fountain',
+          'broken': '🚰 Fountain (broken)',
+          'no': ''  // Don't show if no fountain
+        };
+        if (fountainMap[playground.drinking_fountain]) {
+          amenities.push(fountainMap[playground.drinking_fountain]);
+        }
+      }
+
+      if (hasValue(playground.seating)) {
+        const seatingMap = {
+          'plenty': '🪑 Plenty of seating',
+          'some': '🪑 Some benches',
+          'limited': '🪑 Limited seating',
+          'none': ''  // Don't show if no seating
+        };
+        if (seatingMap[playground.seating]) {
+          amenities.push(seatingMap[playground.seating]);
+        }
+      }
+
+      if (amenities.length > 0) {
+        sections.push(`
+          <div style="margin-bottom: 16px;">
+            <h4 style="margin: 0 0 8px 0; color: var(--accent); font-size: 14px;">Amenities</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+              ${amenities.map(amenity => `<span class="chip">${amenity}</span>`).join('')}
+            </div>
+          </div>
+        `);
+      }
+
+      // Crowd Level
+      if (hasValue(playground.crowd_level)) {
+        const crowdMap = {
+          'quiet': '😌 Usually quiet',
+          'moderate': '👥 Moderately busy',
+          'busy': '👥👥 Usually busy',
+          'very_busy': '👥👥👥 Very crowded'
+        };
+        const crowdInfo = crowdMap[playground.crowd_level] || `👥 ${formatValue(playground.crowd_level)}`;
+        sections.push(`
+          <div style="margin-bottom: 16px;">
+            <span class="chip">${crowdInfo}</span>
+          </div>
+        `);
+      }
+
+      // Special Features
+      if (hasValue(playground.novelty_notes)) {
+        sections.push(`
+          <div style="margin-bottom: 16px;">
+            <h4 style="margin: 0 0 8px 0; color: var(--accent); font-size: 14px;">✨ Special Features</h4>
+            <div style="background: #0e141d; padding: 12px; border-radius: 8px; border: 1px solid #273143;">
+              <p style="margin: 0; color: var(--ink); font-size: 14px; line-height: 1.4;">${playground.novelty_notes}</p>
+            </div>
+          </div>
+        `);
+      }
+
+      // Last Verified (for admin context)
+      if (hasValue(playground.last_verified) && state.adminAuthenticated) {
+        const verifyDate = new Date(playground.last_verified).toLocaleDateString();
+        sections.push(`
+          <div style="margin-bottom: 16px;">
+            <span class="chip" style="font-size: 11px; color: var(--muted);">📅 Verified: ${verifyDate}</span>
+          </div>
+        `);
+      }
+
+      return sections.join('');
+    }
+
     // Pick random playground
     function pickRandomPlayground() {
       if (state.filteredPlaygrounds.length === 0) return;
@@ -1646,7 +2165,7 @@
       const {lat, lon} = normalizeLatLon(random);
       
       state.map.flyTo([lat, lon], 16);
-      setTimeout(() => showPlaygroundDetails(random.Prop_ID), 500);
+      setTimeout(() => showPlaygroundDetails(random.Playground_ID), 500);
     }
 
     // Near Me functionality
@@ -1849,7 +2368,7 @@
         
         return `
           <div style="border:1px solid #273143;border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer;" 
-               onclick="selectNearbyPlayground('${p.Prop_ID}', ${p.distance.toFixed(3)})">
+               onclick="selectNearbyPlayground('${p.Playground_ID}', ${p.distance.toFixed(3)})">
             <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px;">
               <strong style="font-size:14px;">${p.Name || 'Unnamed Playground'}${sensoryText}</strong>
               <span style="color:var(--muted);font-size:12px;">${p.distanceText}</span>
@@ -1865,13 +2384,13 @@
       qs('nearbyList').innerHTML = html;
     }
 
-    function selectNearbyPlayground(propId, distance) {
-      const playground = nearMeState.nearbyPlaygrounds.find(p => p.Prop_ID === propId);
+    function selectNearbyPlayground(playgroundId, distance) {
+      const playground = nearMeState.nearbyPlaygrounds.find(p => p.Playground_ID === playgroundId);
       if (playground) {
         const {lat, lon} = normalizeLatLon(playground);
         hideNearMeModal();
         state.map.flyTo([lat, lon], 16);
-        setTimeout(() => showPlaygroundDetails(propId), 500);
+        setTimeout(() => showPlaygroundDetails(playground.Playground_ID), 500);
       }
     }
 
@@ -2034,6 +2553,7 @@
     qs('adminLogout').addEventListener('click', () => logoutAdmin());
     qs('addPlayground').addEventListener('click', () => showAddPlaygroundModal());
     qs('managePlaygrounds').addEventListener('click', () => showManagePlaygroundsModal());
+    qs('editPlaygroundInfo').addEventListener('click', () => showPlaygroundInfoEditor());
     qs('addReview').addEventListener('click', () => showAddReviewModal());
     qs('manageReviews').addEventListener('click', () => showReviewManager());
     
@@ -2079,6 +2599,18 @@
     qs('nearMeAddress').addEventListener('keypress', (e) => {
       if (e.key === 'Enter' && !qs('findNearbyPlaygrounds').disabled) {
         geocodeAddress();
+      }
+    });
+
+    // Playground Info Editor event listeners
+    qs('closePlaygroundInfo').addEventListener('click', hidePlaygroundInfoEditor);
+    qs('cancelPlaygroundInfo').addEventListener('click', hidePlaygroundInfoEditor);
+    qs('searchPlaygroundInfo').addEventListener('click', searchPlaygroundsForInfoEdit);
+    qs('playgroundInfoSelect').addEventListener('change', selectPlaygroundForInfoEdit);
+    qs('playgroundInfoForm').addEventListener('submit', savePlaygroundInfo);
+    qs('playgroundInfoSearch').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        searchPlaygroundsForInfoEdit();
       }
     });
 
