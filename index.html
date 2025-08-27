@@ -418,6 +418,7 @@
         <button id="showStats" class="secondary">📊 Show Stats</button>
         
         <div style="border-top:1px solid #2a3547;margin-top:8px;padding-top:8px;">
+          <button id="upgradeSchema" class="secondary">🔧 Upgrade Database Schema</button>
           <button id="resetDatabase" class="danger">🗑️ Reset Database</button>
           <button id="adminLogout" class="danger" style="margin-top:4px;">🚪 Logout</button>
         </div>
@@ -1312,6 +1313,120 @@
       }
     }
 
+    async function upgradeSchema() {
+      if (!confirm('🔧 This will upgrade all playground records to include new detailed information fields. This is safe and preserves all existing data. Continue?')) {
+        return;
+      }
+      
+      try {
+        // Check if the method exists, if not use fallback
+        let result;
+        if (typeof playgroundDB.forceSchemaUpgrade === 'function') {
+          result = await playgroundDB.forceSchemaUpgrade();
+        } else {
+          // Fallback manual upgrade
+          console.log('Using fallback upgrade method...');
+          result = await manualSchemaUpgrade();
+        }
+        alert(`✅ Database schema upgraded successfully!\n\nUpgraded: ${result.upgraded} playgrounds\nTotal: ${result.total} playgrounds\n\nAll playgrounds now have extended information fields available for manual editing.`);
+        console.log('Schema upgrade completed:', result);
+      } catch (e) {
+        console.error('Error upgrading schema:', e);
+        if (e.message.includes('forceSchemaUpgrade is not a function')) {
+          alert('❌ Database module needs to be reloaded. Please refresh the page and try again.\n\nThis error occurs when new database methods are added but the browser is using the cached version.');
+        } else {
+          alert('Error upgrading database schema: ' + e.message);
+        }
+      }
+    }
+
+    // Manual schema upgrade fallback function
+    async function manualSchemaUpgrade() {
+      console.log('Starting manual schema upgrade...');
+      
+      const defaultInfo = {
+        age_range_min: null,
+        age_range_max: null,
+        novelty_has: null,
+        novelty_notes: null,
+        shade: 'unknown',
+        fenced: 'unknown',
+        star: null,
+        surface: 'unknown',
+        water_play: 'unknown',
+        bathroom: 'unknown',
+        drinking_fountain: 'unknown',
+        seating: 'unknown',
+        crowd_level: 'unknown',
+        accessibility_ada_paths: null,
+        accessibility_adaptive_swings: null,
+        accessibility_notes: null,
+        stroller_friendly: 'unknown',
+        transit_nearest_stop: null,
+        transit_walk_minutes: null,
+        safety_line_of_sight: 'unknown',
+        maintenance: 'unknown',
+        last_verified: null,
+        sources: [],
+        editor_notes: null,
+        schema_version: 2
+      };
+
+      const playgrounds = await playgroundDB.getAllPlaygrounds();
+      let updated = 0;
+
+      for (const playground of playgrounds) {
+        if (!playground.schema_version || playground.schema_version < 2) {
+          // Update playground with new fields
+          const updates = { ...defaultInfo };
+          await playgroundDB.updatePlayground(playground.id, updates);
+          updated++;
+        }
+      }
+
+      console.log(`Manual upgrade completed: ${updated} playgrounds updated`);
+      return { upgraded: updated, total: playgrounds.length };
+    }
+
+    // Test function for playground info (for development/testing)
+    async function testPlaygroundInfo() {
+      try {
+        console.log('Testing playground info functionality...');
+        const playgrounds = await playgroundDB.getAllPlaygrounds();
+        if (playgrounds.length > 0) {
+          const testPlayground = playgrounds[0];
+          console.log('Sample playground before info update:', testPlayground);
+          
+          // Test updating playground info
+          const updates = {
+            shade: 'partial',
+            fenced: 'yes',
+            star: 4,
+            surface: 'rubber',
+            water_play: 'yes',
+            bathroom: 'nearby',
+            editor_notes: 'Test update from admin panel'
+          };
+          
+          await playgroundDB.updatePlaygroundInfo(testPlayground.id, updates);
+          const updatedPlayground = await playgroundDB.getPlaygroundWithInfo(testPlayground.Prop_ID);
+          console.log('Sample playground after info update:', updatedPlayground);
+          
+          console.log('✅ Playground info functionality test completed successfully!');
+          return true;
+        } else {
+          console.log('No playgrounds found for testing');
+          return false;
+        }
+      } catch (e) {
+        console.error('Error testing playground info:', e);
+        return false;
+      }
+    }
+
+    // Make test function available globally for console access
+    window.testPlaygroundInfo = testPlaygroundInfo;
+
     async function resetDatabase() {
       if (!confirm('⚠️ This will delete ALL playground data and reviews from your browser. Are you sure?')) {
         return;
@@ -1927,6 +2042,7 @@
     qs('viewFavorites').addEventListener('click', () => viewFavorites());
     qs('exportData').addEventListener('click', () => exportData());
     qs('showStats').addEventListener('click', () => showStats());
+    qs('upgradeSchema').addEventListener('click', () => upgradeSchema());
     qs('resetDatabase').addEventListener('click', () => resetDatabase());
 
     // Review modal event listeners

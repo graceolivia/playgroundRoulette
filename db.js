@@ -5,12 +5,52 @@ class PlaygroundDB extends Dexie {
   constructor() {
     super('PlaygroundDatabase');
     
-    // Define schema
+    // Define schema - Version 1 (original)
     this.version(1).stores({
       playgrounds: '++id, Prop_ID, Playground_ID, Name, Location, Accessible, lat, lon',
       settings: 'key, value',
       favorites: '++id, playground_id, added_date',
       reviews: '++id, playground_prop_id, title, content, rating, author, date, featured, approved'
+    });
+
+    // Version 2 - Add extended playground information fields
+    this.version(2).stores({
+      playgrounds: '++id, Prop_ID, Playground_ID, Name, Location, Accessible, lat, lon, age_range_min, age_range_max, novelty_has, shade, fenced, star, surface, water_play, bathroom, drinking_fountain, seating, crowd_level, accessibility_ada_paths, accessibility_adaptive_swings, stroller_friendly, transit_nearest_stop, transit_walk_minutes, safety_line_of_sight, maintenance, last_verified, schema_version',
+      settings: 'key, value',
+      favorites: '++id, playground_id, added_date',
+      reviews: '++id, playground_prop_id, title, content, rating, author, date, featured, approved'
+    }).upgrade(trans => {
+      // Migrate existing playgrounds to include new fields
+      return trans.table('playgrounds').toCollection().modify(playground => {
+        if (!playground.schema_version || playground.schema_version < 2) {
+          // Add default values for new fields
+          playground.age_range_min = null;
+          playground.age_range_max = null;
+          playground.novelty_has = null;
+          playground.novelty_notes = null;
+          playground.shade = 'unknown';
+          playground.fenced = 'unknown';
+          playground.star = null;
+          playground.surface = 'unknown';
+          playground.water_play = 'unknown';
+          playground.bathroom = 'unknown';
+          playground.drinking_fountain = 'unknown';
+          playground.seating = 'unknown';
+          playground.crowd_level = 'unknown';
+          playground.accessibility_ada_paths = null;
+          playground.accessibility_adaptive_swings = null;
+          playground.accessibility_notes = null;
+          playground.stroller_friendly = 'unknown';
+          playground.transit_nearest_stop = null;
+          playground.transit_walk_minutes = null;
+          playground.safety_line_of_sight = 'unknown';
+          playground.maintenance = 'unknown';
+          playground.last_verified = null;
+          playground.sources = [];
+          playground.editor_notes = null;
+          playground.schema_version = 2;
+        }
+      });
     });
   }
 }
@@ -96,7 +136,13 @@ class PlaygroundDatabase {
 
   // Add a new playground
   async addPlayground(playground) {
-    return await this.db.playgrounds.add(playground);
+    const defaults = this.getDefaultPlaygroundInfo();
+    const playgroundWithDefaults = {
+      ...defaults,
+      ...playground,
+      schema_version: 2
+    };
+    return await this.db.playgrounds.add(playgroundWithDefaults);
   }
 
   // Update existing playground
@@ -288,7 +334,9 @@ class PlaygroundDatabase {
 
   // Playground management methods
   async addPlayground(playgroundData) {
+    const defaults = this.getDefaultPlaygroundInfo();
     const playground = {
+      ...defaults,
       Prop_ID: playgroundData.Prop_ID,
       Playground_ID: playgroundData.Playground_ID || playgroundData.Prop_ID,
       Name: playgroundData.Name,
@@ -300,7 +348,8 @@ class PlaygroundDatabase {
       ADA_Accessible_Comfort_Station: playgroundData.ADA_Accessible_Comfort_Station || 'Unknown',
       slug: playgroundData.slug || null,
       added_date: new Date().toISOString(),
-      added_by: 'admin'
+      added_by: 'admin',
+      schema_version: 2
     };
     return await this.db.playgrounds.add(playground);
   }
@@ -392,6 +441,134 @@ class PlaygroundDatabase {
       sensoryPercent: total > 0 ? Math.round((sensoryFriendly / total) * 100) : 0,
       reviewedPercent: total > 0 ? Math.round((withReviews / total) * 100) : 0
     };
+  }
+
+  // Extended playground information methods
+  
+  // Get default playground info structure
+  getDefaultPlaygroundInfo() {
+    return {
+      age_range_min: null,
+      age_range_max: null,
+      novelty_has: null,
+      novelty_notes: null,
+      shade: 'unknown',
+      fenced: 'unknown',
+      star: null,
+      surface: 'unknown',
+      water_play: 'unknown',
+      bathroom: 'unknown',
+      drinking_fountain: 'unknown',
+      seating: 'unknown',
+      crowd_level: 'unknown',
+      accessibility_ada_paths: null,
+      accessibility_adaptive_swings: null,
+      accessibility_notes: null,
+      stroller_friendly: 'unknown',
+      transit_nearest_stop: null,
+      transit_walk_minutes: null,
+      safety_line_of_sight: 'unknown',
+      maintenance: 'unknown',
+      last_verified: null,
+      sources: [],
+      editor_notes: null,
+      schema_version: 2
+    };
+  }
+
+  // Update playground with detailed information
+  async updatePlaygroundInfo(playgroundId, infoUpdates) {
+    const updates = {
+      ...infoUpdates,
+      last_verified: new Date().toISOString(),
+      schema_version: 2
+    };
+    return await this.db.playgrounds.update(playgroundId, updates);
+  }
+
+  // Get playground with all detailed information
+  async getPlaygroundWithInfo(propId) {
+    const playground = await this.getPlaygroundByPropId(propId);
+    if (!playground) return null;
+
+    // Ensure all fields exist (for backwards compatibility)
+    const defaults = this.getDefaultPlaygroundInfo();
+    return {
+      ...defaults,
+      ...playground
+    };
+  }
+
+  // Batch update playground info for multiple playgrounds
+  async batchUpdatePlaygroundInfo(updates) {
+    const results = [];
+    for (const update of updates) {
+      try {
+        const result = await this.updatePlaygroundInfo(update.id, update.info);
+        results.push({ success: true, id: update.id, result });
+      } catch (error) {
+        results.push({ success: false, id: update.id, error: error.message });
+      }
+    }
+    return results;
+  }
+
+  // Search playgrounds by extended info
+  async searchPlaygroundsByInfo(criteria) {
+    let playgrounds = await this.db.playgrounds.toArray();
+    
+    // Apply filters based on criteria
+    if (criteria.shade && criteria.shade !== 'any') {
+      playgrounds = playgrounds.filter(p => p.shade === criteria.shade);
+    }
+    
+    if (criteria.fenced && criteria.fenced !== 'any') {
+      playgrounds = playgrounds.filter(p => p.fenced === criteria.fenced);
+    }
+    
+    if (criteria.water_play && criteria.water_play !== 'any') {
+      playgrounds = playgrounds.filter(p => p.water_play === criteria.water_play);
+    }
+    
+    if (criteria.star !== undefined && criteria.star !== null) {
+      playgrounds = playgrounds.filter(p => p.star >= criteria.star);
+    }
+
+    if (criteria.age_range_min !== undefined && criteria.age_range_min !== null) {
+      playgrounds = playgrounds.filter(p => 
+        p.age_range_min === null || p.age_range_min <= criteria.age_range_min
+      );
+    }
+
+    if (criteria.age_range_max !== undefined && criteria.age_range_max !== null) {
+      playgrounds = playgrounds.filter(p => 
+        p.age_range_max === null || p.age_range_max >= criteria.age_range_max
+      );
+    }
+
+    return playgrounds;
+  }
+
+  // Force migration of all playgrounds to schema version 2
+  async forceSchemaUpgrade() {
+    console.log('Starting forced schema upgrade...');
+    const playgrounds = await this.db.playgrounds.toArray();
+    const defaults = this.getDefaultPlaygroundInfo();
+    let updated = 0;
+
+    for (const playground of playgrounds) {
+      if (!playground.schema_version || playground.schema_version < 2) {
+        await this.db.playgrounds.update(playground.id, {
+          ...defaults,
+          last_verified: null, // Don't set verification date for auto-migration
+          schema_version: 2
+        });
+        updated++;
+      }
+    }
+
+    console.log(`Upgraded ${updated} playgrounds to schema version 2`);
+    return { upgraded: updated, total: playgrounds.length };
   }
 }
 
