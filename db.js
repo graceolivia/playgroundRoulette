@@ -131,6 +131,22 @@ class PlaygroundDatabase {
       });
     }
 
+    if (filters.bathroom) {
+      query = query.filter(p => {
+        const bathroom = (p['ADA_Accessible_Comfort_Station'] || '').trim();
+        let bathroomMatch = false;
+        
+        if (filters.bathroom.any && (bathroom === 'Not Accessible' || bathroom === 'Accessible')) {
+          bathroomMatch = true; // Has any bathroom (accessible or not)
+        }
+        if (filters.bathroom.accessible && bathroom === 'Accessible') {
+          bathroomMatch = true; // Has accessible bathroom
+        }
+        
+        return bathroomMatch;
+      });
+    }
+
     return await query.toArray();
   }
 

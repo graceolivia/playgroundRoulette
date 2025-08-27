@@ -141,7 +141,6 @@
         min-width:auto;
         max-width:none;
         height:auto;
-        max-height:50vh;
         border-right:none;
         border-bottom:1px solid #1f2733;
       }
@@ -152,10 +151,56 @@
       
       .sidebar-header h1{
         font-size:20px;
+        margin:0;
+      }
+      
+      .mobile-menu-toggle{
+        background:none;
+        border:none;
+        cursor:pointer;
+        display:none;
+        padding:8px;
+        border-radius:4px;
+      }
+      
+      .hamburger{
+        width:24px;
+        height:18px;
+        position:relative;
+        display:flex;
+        flex-direction:column;
+        justify-content:space-between;
+      }
+      
+      .hamburger span{
+        width:100%;
+        height:2px;
+        background:var(--ink);
+        border-radius:1px;
+        transition:all 0.3s ease;
+      }
+      
+      .hamburger.active span:nth-child(1){
+        transform:rotate(45deg) translate(6px, 6px);
+      }
+      
+      .hamburger.active span:nth-child(2){
+        opacity:0;
+      }
+      
+      .hamburger.active span:nth-child(3){
+        transform:rotate(-45deg) translate(6px, -6px);
       }
       
       .sidebar-content{
         padding:16px;
+        overflow:hidden;
+        transition:max-height 0.3s ease-out;
+      }
+      
+      .sidebar-content.collapsed{
+        max-height:0;
+        padding:0 16px;
       }
       
       .controls{
@@ -166,6 +211,73 @@
         flex-direction:row;
         flex-wrap:wrap;
       }
+      
+      @media (max-width: 768px) {
+        .sidebar{
+          position:relative;
+        }
+        
+        .mobile-menu-toggle{
+          display:block;
+          position:absolute;
+          top:16px;
+          right:16px;
+          z-index:10;
+        }
+        
+        .sidebar-header{
+          padding-right:48px;
+        }
+        
+        .sidebar-content.collapsed{
+          max-height:0;
+          padding:0 16px;
+        }
+        
+        /* Smaller text for mobile controls */
+        .control-group label{
+          font-size:12px;
+          margin-bottom:4px;
+        }
+        
+        .controls select{
+          padding:8px;
+          font-size:12px;
+          border-radius:6px;
+        }
+        
+        .controls{
+          gap:8px;
+        }
+        
+        .control-group{
+          gap:4px;
+        }
+        
+        /* Smaller checkbox labels */
+        .mobile-small{
+          font-size:11px !important;
+        }
+        
+        /* Bathroom options on same line for mobile */
+        .bathroom-options{
+          flex-direction:row !important;
+          gap:12px !important;
+        }
+        
+        /* Smaller buttons */
+        .button-group button{
+          padding:8px 12px;
+          font-size:12px;
+          font-weight:600;
+        }
+        
+        .button-group{
+          gap:6px;
+          margin-top:12px;
+        }
+      }
+    }
       
       .button-group button{
         flex:1;
@@ -312,20 +424,30 @@
       font-size:16px;
       z-index:1001;
     }
+    
   </style>
 </head>
 <body>
   <div class="app-container">
     <div class="sidebar">
+      <button class="mobile-menu-toggle" id="mobileMenuToggle">
+        <div class="hamburger" id="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </button>
       <div class="sidebar-header">
-        <h1>NYC Playground Explorer</h1>
-        <div style="font-size:12px;color:var(--muted);">
-          Data sourced from NYC Parks Department. <br/>
-          <a href="about.html" style="color:var(--accent);text-decoration:none;">About this project</a>
+        <div>
+          <h1>NYC Playground Explorer</h1>
+          <div style="font-size:12px;color:var(--muted);">
+            Data sourced from NYC Parks Department. <br/>
+            <a href="about.html" style="color:var(--accent);text-decoration:none;">About this project</a>
+          </div>
         </div>
       </div>
       
-      <div class="sidebar-content">
+      <div class="sidebar-content" id="sidebar-content">
         <div class="controls">
           <div class="control-group">
             <label for="borough">Borough</label>
@@ -356,6 +478,20 @@
               <option value="Y">Sensory-Friendly</option>
               <option value="N">Not Sensory-Friendly</option>
             </select>
+          </div>
+          
+          <div class="control-group">
+            <label>Bathroom Options</label>
+            <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;" class="bathroom-options">
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;" class="mobile-small">
+                <input type="checkbox" id="bathroomAny" style="margin: 0;">
+                <span>Any Bathroom</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;" class="mobile-small">
+                <input type="checkbox" id="bathroomAccessible" style="margin: 0;">
+                <span>Accessible Bathroom</span>
+              </label>
+            </div>
           </div>
           
           <div class="button-group">
@@ -1937,12 +2073,17 @@
       const borough = qs('borough').value;
       const accessible = qs('accessible').value;
       const sensory = qs('sensory').value;
+      const bathroomAny = qs('bathroomAny').checked;
+      const bathroomAccessible = qs('bathroomAccessible').checked;
 
       try {
         const filters = {};
         if (borough !== 'All') filters.borough = borough;
         if (accessible !== 'Any') filters.accessible = accessible;
         if (sensory !== 'Any') filters.sensory = sensory;
+        if (bathroomAny || bathroomAccessible) {
+          filters.bathroom = { any: bathroomAny, accessible: bathroomAccessible };
+        }
 
         state.filteredPlaygrounds = await playgroundDB.filterPlaygrounds(filters);
       } catch (e) {
@@ -1953,9 +2094,23 @@
           const pBorough = boroughFromPropId(p.Prop_ID);
           const pAccess = normalizeAccessible(p.Accessible);
           const pSens = (p['Sensory-Friendly']||'').toUpperCase();
+          const pBathroom = (p['ADA_Accessible_Comfort_Station']||'').trim();
           if (borough !== 'All' && pBorough !== borough) return false;
           if (accessible !== 'Any' && pAccess !== accessible) return false;
           if (sensory !== 'Any' && pSens !== sensory) return false;
+          
+          // Handle bathroom checkboxes
+          if (bathroomAny || bathroomAccessible) {
+            let bathroomMatch = false;
+            if (bathroomAny && (pBathroom === 'Not Accessible' || pBathroom === 'Accessible')) {
+              bathroomMatch = true; // Has any bathroom (accessible or not)
+            }
+            if (bathroomAccessible && pBathroom === 'Accessible') {
+              bathroomMatch = true; // Has accessible bathroom
+            }
+            if (!bathroomMatch) return false;
+          }
+          
           return true;
         });
         state.filteredPlaygrounds = items;
@@ -2540,10 +2695,36 @@
       state.adminAuthenticated = true;
     }
 
+    // Mobile menu toggle functionality
+    function toggleMobileMenu() {
+      const content = qs('sidebar-content');
+      const hamburger = qs('hamburger');
+      
+      if (content.classList.contains('collapsed')) {
+        content.classList.remove('collapsed');
+        hamburger.classList.add('active');
+      } else {
+        content.classList.add('collapsed');
+        hamburger.classList.remove('active');
+      }
+    }
+
+    // Initialize mobile menu as collapsed on small screens
+    function initMobileMenu() {
+      if (window.innerWidth <= 768) {
+        qs('sidebar-content').classList.add('collapsed');
+        qs('hamburger').classList.remove('active');
+      } else {
+        qs('sidebar-content').classList.remove('collapsed');
+        qs('hamburger').classList.remove('active');
+      }
+    }
+
     // Event listeners
     qs('applyFilters').addEventListener('click', applyFilters);
     qs('pickRandom').addEventListener('click', pickRandomPlayground);
     qs('findMe').addEventListener('click', findNearMe);
+    qs('mobileMenuToggle').addEventListener('click', toggleMobileMenu);
     qs('closeDetails').addEventListener('click', () => {
       qs('detailsPanel').classList.remove('visible');
     });
@@ -2647,6 +2828,12 @@
 
     // Initialize star display
     updateStarDisplay(5);
+
+    // Initialize mobile menu
+    initMobileMenu();
+    
+    // Handle window resize for mobile menu
+    window.addEventListener('resize', initMobileMenu);
 
     // Load everything
     load();
