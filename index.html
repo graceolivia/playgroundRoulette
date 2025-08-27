@@ -18,42 +18,77 @@
     html,body{height:100%; margin:0; padding:0;}
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--ink);}
     
-    /* Header */
-    .header{
-      background:var(--panel);
-      border-bottom:1px solid #1f2733;
-      padding:12px 20px;
+    /* Layout Structure */
+    .app-container{
       display:flex;
-      align-items:center;
-      justify-content:space-between;
-      flex-wrap:wrap;
-      gap:16px;
-      box-shadow:0 2px 10px rgba(0,0,0,.3);
-      z-index:1000;
-      position:relative;
+      height:100vh;
     }
     
-    .header h1{
-      font-size:clamp(18px,2.2vw,24px);
-      margin:0;
+    /* Sidebar */
+    .sidebar{
+      width:33.333%;
+      min-width:320px;
+      max-width:400px;
+      background:var(--panel);
+      border-right:1px solid #1f2733;
+      display:flex;
+      flex-direction:column;
+      box-shadow:2px 0 10px rgba(0,0,0,.3);
+      z-index:1000;
+      overflow-y:auto;
+    }
+    
+    .sidebar-header{
+      padding:20px;
+      border-bottom:1px solid #1f2733;
+      flex-shrink:0;
+    }
+    
+    .sidebar-header h1{
+      font-size:clamp(20px,2.5vw,28px);
+      margin:0 0 8px 0;
       font-weight:800;
       letter-spacing:.2px;
     }
     
+    .sidebar-content{
+      padding:20px;
+      flex:1;
+    }
+    
     .controls{
       display:flex;
-      gap:12px;
-      align-items:center;
-      flex-wrap:wrap;
+      flex-direction:column;
+      gap:16px;
+    }
+    
+    .control-group{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    
+    .control-group label{
+      color:var(--muted);
+      font-size:14px;
+      font-weight:500;
     }
     
     .controls select{
       background:#0e141d;
       border:1px solid #273143;
       color:var(--ink);
-      padding:8px 12px;
+      padding:12px;
       border-radius:8px;
       font-size:14px;
+      width:100%;
+    }
+    
+    .button-group{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:8px;
     }
     
     button{
@@ -62,27 +97,80 @@
       color:#071019;
       border:0;
       border-radius:8px;
-      padding:10px 16px;
+      padding:12px 16px;
       font-weight:700;
       font-size:14px;
       transition:transform 0.1s;
+      width:100%;
     }
     
     button:hover{transform:translateY(-1px);}
     button.secondary{background:#192230;color:var(--ink);border:1px solid #2a3547}
     button.danger{background:#6b2e2e;color:#ffdede;}
     
-    .count{color:var(--muted);font-size:14px;margin-left:auto;}
+    .count{
+      color:var(--muted);
+      font-size:14px;
+      text-align:center;
+      padding:16px 20px;
+      border-top:1px solid #1f2733;
+      background:rgba(0,0,0,.2);
+      margin-top:auto;
+      flex-shrink:0;
+    }
     
     /* Map Container */
     .map-container{
-      height:calc(100vh - 80px);
+      flex:1;
       position:relative;
     }
     
     #map{
       height:100%;
       width:100%;
+    }
+    
+    /* Mobile Layout */
+    @media (max-width: 768px) {
+      .app-container{
+        flex-direction:column;
+      }
+      
+      .sidebar{
+        width:100%;
+        min-width:auto;
+        max-width:none;
+        height:auto;
+        max-height:50vh;
+        border-right:none;
+        border-bottom:1px solid #1f2733;
+      }
+      
+      .sidebar-header{
+        padding:16px;
+      }
+      
+      .sidebar-header h1{
+        font-size:20px;
+      }
+      
+      .sidebar-content{
+        padding:16px;
+      }
+      
+      .controls{
+        gap:12px;
+      }
+      
+      .button-group{
+        flex-direction:row;
+        flex-wrap:wrap;
+      }
+      
+      .button-group button{
+        flex:1;
+        min-width:120px;
+      }
     }
     
     /* Details Panel */
@@ -227,46 +315,61 @@
   </style>
 </head>
 <body>
-  <header class="header">
-    <div>
-      <h1>NYC Playground Explorer</h1>
-      <div style="font-size:12px;color:var(--muted);margin-top:4px;">
-        Data sourced from NYC Parks Deparment. <br/><a href="about.html" style="color:var(--accent);text-decoration:none;"> About this project</a>
+  <div class="app-container">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h1>NYC Playground Explorer</h1>
+        <div style="font-size:12px;color:var(--muted);">
+          Data sourced from NYC Parks Department. <br/>
+          <a href="about.html" style="color:var(--accent);text-decoration:none;">About this project</a>
+        </div>
       </div>
+      
+      <div class="sidebar-content">
+        <div class="controls">
+          <div class="control-group">
+            <label for="borough">Borough</label>
+            <select id="borough">
+              <option value="All">All Boroughs</option>
+              <option>Manhattan</option>
+              <option>Brooklyn</option>
+              <option>Queens</option>
+              <option>Bronx</option>
+              <option>Staten Island</option>
+            </select>
+          </div>
+          
+          <div class="control-group">
+            <label for="accessible">Accessibility</label>
+            <select id="accessible">
+              <option value="Any">Any Access</option>
+              <option value="Yes">Accessible</option>
+              <option value="Limited">Limited Access</option>
+              <option value="No">Not Accessible</option>
+            </select>
+          </div>
+          
+          <div class="control-group">
+            <label for="sensory">Sensory Features</label>
+            <select id="sensory">
+              <option value="Any">Any Sensory</option>
+              <option value="Y">Sensory-Friendly</option>
+              <option value="N">Not Sensory-Friendly</option>
+            </select>
+          </div>
+          
+          <div class="button-group">
+            <button id="applyFilters" class="secondary">Apply Filters</button>
+            <button id="pickRandom">🎲 Pick Random</button>
+            <button id="findMe" class="secondary">📍 Near Me</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="count" id="count">Loading...</div>
     </div>
     
-    <div class="controls">
-      <select id="borough">
-        <option value="All">All Boroughs</option>
-        <option>Manhattan</option>
-        <option>Brooklyn</option>
-        <option>Queens</option>
-        <option>Bronx</option>
-        <option>Staten Island</option>
-      </select>
-      
-      <select id="accessible">
-        <option value="Any">Any Access</option>
-        <option value="Yes">Accessible</option>
-        <option value="Limited">Limited Access</option>
-        <option value="No">Not Accessible</option>
-      </select>
-      
-      <select id="sensory">
-        <option value="Any">Any Sensory</option>
-        <option value="Y">Sensory-Friendly</option>
-        <option value="N">Not Sensory-Friendly</option>
-      </select>
-      
-      <button id="applyFilters" class="secondary">Apply Filters</button>
-      <button id="pickRandom">🎲 Pick Random</button>
-      <button id="findMe" class="secondary">📍 Near Me</button>
-    </div>
-    
-    <div class="count" id="count">Loading...</div>
-  </header>
-
-  <div class="map-container">
+    <div class="map-container">
     <div id="map"></div>
     <div class="loading" id="loading">Loading playground data...</div>
     
@@ -539,6 +642,7 @@
           <div id="nearbyList" style="max-height:200px;overflow-y:auto;"></div>
         </div>
       </div>
+    </div>
     </div>
   </div>
 
