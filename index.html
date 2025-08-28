@@ -147,6 +147,9 @@
       
       .sidebar-header{
         padding:16px;
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-start;
       }
       
       .sidebar-header h1{
@@ -159,7 +162,7 @@
         border:none;
         cursor:pointer;
         display:none;
-        padding:8px;
+        padding:4px;
         border-radius:4px;
       }
       
@@ -212,21 +215,9 @@
         flex-wrap:wrap;
       }
       
-      @media (max-width: 768px) {
-        .sidebar{
-          position:relative;
-        }
-        
+      @media (max-width: 768px) {        
         .mobile-menu-toggle{
           display:block;
-          position:absolute;
-          top:16px;
-          right:16px;
-          z-index:10;
-        }
-        
-        .sidebar-header{
-          padding-right:48px;
         }
         
         .sidebar-content.collapsed{
@@ -430,13 +421,6 @@
 <body>
   <div class="app-container">
     <div class="sidebar">
-      <button class="mobile-menu-toggle" id="mobileMenuToggle">
-        <div class="hamburger" id="hamburger">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-      </button>
       <div class="sidebar-header">
         <div>
           <h1>NYC Playground Explorer</h1>
@@ -445,6 +429,13 @@
             <a href="about.html" style="color:var(--accent);text-decoration:none;">About this project</a>
           </div>
         </div>
+        <button class="mobile-menu-toggle" id="mobileMenuToggle">
+          <div class="hamburger" id="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </button>
       </div>
       
       <div class="sidebar-content" id="sidebar-content">
@@ -2319,8 +2310,16 @@
       const random = state.filteredPlaygrounds[Math.floor(Math.random() * state.filteredPlaygrounds.length)];
       const {lat, lon} = normalizeLatLon(random);
       
+      // Fly to location first
       state.map.flyTo([lat, lon], 16);
-      setTimeout(() => showPlaygroundDetails(random.Playground_ID), 500);
+      
+      // Find the marker for this playground and open its popup
+      setTimeout(() => {
+        const markerData = state.markers.find(m => m.playground.Playground_ID === random.Playground_ID);
+        if (markerData) {
+          markerData.marker.openPopup();
+        }
+      }, 500);
     }
 
     // Near Me functionality
