@@ -257,6 +257,12 @@
           gap:12px !important;
         }
         
+        /* Sprinkler options styling for mobile */
+        .sprinkler-options{
+          flex-direction:row !important;
+          gap:12px !important;
+        }
+        
         /* Smaller buttons */
         .button-group button{
           padding:8px 12px;
@@ -486,8 +492,18 @@
             </div>
           </div>
           
+          <div class="control-group">
+            <label>Sprinkler Options</label>
+            <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;" class="sprinkler-options">
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;" class="mobile-small">
+                <input type="checkbox" id="sprinklerAny" style="margin: 0;">
+                <span>💦 Has Sprinklers</span>
+              </label>
+            </div>
+          </div>
+          
           <div class="button-group">
-            <button id="applyFilters" class="secondary">Apply Filters</button>
+            <button id="applyFilters" class="btn secondary">Apply Filters</button>
             <button id="pickRandom">🎲 Pick Random</button>
             <button id="findMe" class="secondary">📍 Near Me</button>
           </div>
@@ -2067,6 +2083,7 @@
       const sensory = qs('sensory').value;
       const bathroomAny = qs('bathroomAny').checked;
       const bathroomAccessible = qs('bathroomAccessible').checked;
+      const sprinklerAny = qs('sprinklerAny').checked;
 
       try {
         const filters = {};
@@ -2076,11 +2093,17 @@
         if (bathroomAny || bathroomAccessible) {
           filters.bathroom = { any: bathroomAny, accessible: bathroomAccessible };
         }
+        if (sprinklerAny) {
+          filters.sprinkler = true;
+          console.log('Sprinkler filter applied');
+        }
 
         state.filteredPlaygrounds = await playgroundDB.filterPlaygrounds(filters);
+        console.log(`Database filtering returned ${state.filteredPlaygrounds.length} playgrounds`);
       } catch (e) {
         console.warn('Database filtering failed, using client-side filtering:', e);
         // Fallback to client-side filtering
+        console.log('Using client-side filtering fallback');
         let items = [...state.playgrounds];
         items = items.filter(p => {
           const pBorough = boroughFromPropId(p.Prop_ID);
@@ -2101,6 +2124,13 @@
               bathroomMatch = true; // Has accessible bathroom
             }
             if (!bathroomMatch) return false;
+          }
+          
+          // Handle sprinkler checkbox
+          if (sprinklerAny) {
+            console.log('Checking sprinkler for:', p.Name, 'has_sprinkler:', p.has_sprinkler);
+            const hasSprinkler = p.has_sprinkler === true;
+            if (!hasSprinkler) return false;
           }
           
           return true;
@@ -2638,6 +2668,15 @@
         try {
           state.playgrounds = await playgroundDB.getAllPlaygrounds();
           console.log('Got', state.playgrounds.length, 'playgrounds from database');
+          
+          // Check if database has sprinkler data
+          const withSprinklers = state.playgrounds.filter(p => p.has_sprinkler === true).length;
+          console.log(`Database has ${withSprinklers} playgrounds with sprinklers`);
+          
+          if (withSprinklers === 0 && state.playgrounds.length > 0) {
+            console.log('Database lacks sprinkler data, forcing reload from JSON...');
+            state.playgrounds = [];
+          }
         } catch (dbError) {
           console.warn('Database access failed, will load from JSON:', dbError);
           state.playgrounds = [];
@@ -2648,7 +2687,7 @@
           qs('loading').textContent = 'Loading playground data from JSON...';
           
           try {
-            const res = await fetch('./DPR_Playgrounds_001.json');
+            const res = await fetch('./Playgrounds_Sprinkler_Info.json');
             console.log('JSON fetch response:', res.status);
             
             if (!res.ok) {
@@ -2657,6 +2696,18 @@
             
             const data = await res.json();
             console.log('JSON data loaded, length:', data.length);
+            
+            // Check sprinkler data in JSON
+            const jsonWithSprinklers = data.filter(p => p.has_sprinkler === true).length;
+            console.log(`JSON has ${jsonWithSprinklers} playgrounds with sprinklers`);
+            if (data.length > 0) {
+              console.log('First JSON playground sample:', {
+                name: data[0].Name,
+                has_sprinkler: data[0].has_sprinkler,
+                sprinkler_status: data[0].sprinkler_status
+              });
+            }
+            
             const normalizedData = data.map(p => ({...p})).filter(p => p && p.Name);
             console.log('Normalized data length:', normalizedData.length);
             

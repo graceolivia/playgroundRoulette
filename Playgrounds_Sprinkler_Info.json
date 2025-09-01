@@ -634,10 +634,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "Not Accessible",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "B073-02-SPRAY034",
-    "sprinkler_district": "B-19"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "B073",
@@ -650,10 +650,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "No",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "B207-SPRAY095",
-    "sprinkler_district": "B-18"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "B073",
@@ -698,10 +698,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "Not Accessible",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "B073-10-SPRAY037",
-    "sprinkler_district": "B-19"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "B073",
@@ -2042,10 +2042,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "No",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "M010-164-SPRAY0218",
-    "sprinkler_district": "M-13"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "B212",
@@ -2522,10 +2522,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "Accessible",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "B130-SPRAY065",
-    "sprinkler_district": "B-07"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "B237",
@@ -2826,10 +2826,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "No",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "M124-SPRAY0294",
-    "sprinkler_district": "M-03"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "B258",
@@ -4058,10 +4058,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "No",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "B153-SPRAY076",
-    "sprinkler_district": "B-16"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "B357",
@@ -4906,10 +4906,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "No",
     "Sensory-Friendly": "N",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "M010-202-SPRAY0226",
-    "sprinkler_district": "M-13"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "M010",
@@ -4954,10 +4954,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "Not Accessible",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "X179-SPRAY0656",
-    "sprinkler_district": "X-02"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "M014",
@@ -4970,10 +4970,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "Not Accessible",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "X159-SPRAY0641",
-    "sprinkler_district": "X-09"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "M015",
@@ -5770,10 +5770,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "No",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Broken",
-    "sprinkler_system": "X004-01-SPRAY0573",
-    "sprinkler_district": "X-09"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "M071",
@@ -5786,10 +5786,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "No",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Broken",
-    "sprinkler_system": "X004-01-SPRAY0573",
-    "sprinkler_district": "X-09"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "M072",
@@ -7978,10 +7978,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "Not Accessible",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "Q005-05-SPRAY0359",
-    "sprinkler_district": "Q-12"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "Q005",
@@ -8330,10 +8330,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "Accessible",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "M294-SPRAY0350",
-    "sprinkler_district": "M-08"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "Q021",
@@ -9034,10 +9034,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "Accessible",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "Q102-03-SPRAY0698",
-    "sprinkler_district": "Q-05"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "Q102",
@@ -9386,10 +9386,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "No",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "X159-SPRAY0641",
-    "sprinkler_district": "X-09"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "Q141",
@@ -9466,10 +9466,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "Not Accessible",
     "Sensory-Friendly": "N",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "Q162J-SPRAY0734",
-    "sprinkler_district": "Q-14"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "Q163",
@@ -10011,9 +10011,9 @@
     "ADA_Accessible_Comfort_Station": "Not Accessible",
     "Sensory-Friendly": "Y",
     "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "Q302-SPRAY0449",
-    "sprinkler_district": "Q-05"
+    "sprinkler_status": "Broken",
+    "sprinkler_system": "B332-SPRAY0183",
+    "sprinkler_district": "B-04"
   },
   {
     "Prop_ID": "Q303",
@@ -10378,10 +10378,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "No",
     "Sensory-Friendly": "N",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "X159-SPRAY0641",
-    "sprinkler_district": "X-09"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "Q335",
@@ -10666,10 +10666,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "Not Accessible",
     "Sensory-Friendly": "N",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "X159-SPRAY0641",
-    "sprinkler_district": "X-09"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "Q356",
@@ -10874,10 +10874,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "Not Accessible",
     "Sensory-Friendly": "N",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "Q024-05-SPRAY0742",
-    "sprinkler_district": "Q-07"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "Q363",
@@ -11546,10 +11546,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "Accessible",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "Q425-SPRAY0751",
-    "sprinkler_district": "Q-06"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "Q426",
@@ -12554,10 +12554,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "No",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "B293-SPRAY0158",
-    "sprinkler_district": "B-02"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "R073",
@@ -13306,10 +13306,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "Not Accessible",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Broken",
-    "sprinkler_system": "X004-01-SPRAY0573",
-    "sprinkler_district": "X-09"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "X013",
@@ -14362,10 +14362,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "No",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "M108G-SPRAY690",
-    "sprinkler_district": "M-15"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "X141",
@@ -14554,10 +14554,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "No",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "B159-01-SPRAY081",
-    "sprinkler_district": "B-08"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "X148H2",
@@ -15434,10 +15434,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "No",
     "Sensory-Friendly": "N",
-    "has_sprinkler": true,
-    "sprinkler_status": "Broken",
-    "sprinkler_system": "B082-01B-SPRAY042",
-    "sprinkler_district": "B-10"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "X210",
@@ -15690,10 +15690,10 @@
     "slug": null,
     "ADA_Accessible_Comfort_Station": "Not Accessible",
     "Sensory-Friendly": "Y",
-    "has_sprinkler": true,
-    "sprinkler_status": "Activated",
-    "sprinkler_system": "B275-SPRAY0150",
-    "sprinkler_district": "B-13"
+    "has_sprinkler": false,
+    "sprinkler_status": null,
+    "sprinkler_system": null,
+    "sprinkler_district": null
   },
   {
     "Prop_ID": "X247",

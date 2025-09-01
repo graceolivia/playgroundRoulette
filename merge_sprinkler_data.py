@@ -45,19 +45,42 @@ def similarity_score(name1, name2):
     if norm1 == norm2:
         return 1.0
     
+    # Check if they share significant words (prevent bad matches like "Dan Ross" -> "Diana Ross")
+    words1 = set(norm1.split())
+    words2 = set(norm2.split())
+    
+    # If they share no common words, score is 0
+    if len(words1.intersection(words2)) == 0:
+        return 0.0
+    
     # Use SequenceMatcher for fuzzy matching
     return SequenceMatcher(None, norm1, norm2).ratio()
 
-def find_best_match(playground_name, sprinkler_names, threshold=0.8):
+def find_best_match(playground_name, sprinkler_names, threshold=0.98):
     """Find the best matching sprinkler name for a playground."""
     best_match = None
     best_score = 0.0
     
+    # First try exact match after normalization
+    norm_playground = normalize_name(playground_name)
+    for sprinkler_name in sprinkler_names:
+        norm_sprinkler = normalize_name(sprinkler_name)
+        if norm_playground == norm_sprinkler:
+            return sprinkler_name, 1.0
+    
+    # Then try fuzzy matching with very high threshold
     for sprinkler_name in sprinkler_names:
         score = similarity_score(playground_name, sprinkler_name)
         if score > best_score and score >= threshold:
-            best_score = score
-            best_match = sprinkler_name
+            # Additional validation: check that they share meaningful words
+            playground_words = set(normalize_name(playground_name).split())
+            sprinkler_words = set(normalize_name(sprinkler_name).split())
+            shared_words = playground_words.intersection(sprinkler_words)
+            
+            # Require at least 2 shared words OR very high similarity (>0.99)
+            if len(shared_words) >= 2 or score > 0.99:
+                best_score = score
+                best_match = sprinkler_name
     
     return best_match, best_score
 

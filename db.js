@@ -72,6 +72,22 @@ class PlaygroundDatabase {
         console.log('Importing playground data to database...');
         await this.db.playgrounds.bulkAdd(jsonData);
         console.log(`Imported ${jsonData.length} playgrounds to database`);
+      } else {
+        // Check if we need to reload data (missing sprinkler data or outdated data)
+        const sample = await this.db.playgrounds.limit(1).toArray();
+        const totalCount = await this.db.playgrounds.count();
+        const sprinklerCount = await this.db.playgrounds.filter(p => p.has_sprinkler === true).count();
+        
+        // Reload if missing sprinkler data OR if sprinkler count doesn't match expected (~691)
+        const shouldReload = (sample.length > 0 && sample[0].has_sprinkler === undefined) || 
+                           (sprinklerCount > 700); // Old data had ~718, new has ~691
+        
+        if (shouldReload) {
+          console.log(`Database needs update: ${sprinklerCount} sprinkler playgrounds found, reloading with corrected data...`);
+          await this.db.playgrounds.clear();
+          await this.db.playgrounds.bulkAdd(jsonData);
+          console.log(`Reloaded ${jsonData.length} playgrounds with corrected sprinkler data`);
+        }
       }
     } catch (error) {
       console.error('Database initialization error:', error);
@@ -144,6 +160,14 @@ class PlaygroundDatabase {
         }
         
         return bathroomMatch;
+      });
+    }
+
+    if (filters.sprinkler) {
+      console.log('Database filtering: applying sprinkler filter');
+      query = query.filter(p => {
+        const hasSprinkler = p.has_sprinkler === true;
+        return hasSprinkler;
       });
     }
 
