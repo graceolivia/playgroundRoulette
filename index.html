@@ -12,8 +12,17 @@
   
   <style>
     :root{
-      --bg:#0b0f14; --panel:#121821; --ink:#e6f1ff; --muted:#9bb0c9; --accent:#4fd1c5; --accent2:#9f7aea;
-      --bad:#ff6b6b; --good:#38b000;
+      --bg: linear-gradient(135deg, #a8e6cf 0%, #dcedc8 50%, #f8f9fa 100%); 
+      --panel: rgba(255, 255, 255, 0.95); 
+      --ink: #2d3436; 
+      --muted: #636e72; 
+      --accent: #e17055; 
+      --accent2: #fd79a8;
+      --bad: #e84393; 
+      --good: #00b894;
+      --playground-blue: #74b9ff;
+      --playground-yellow: #fdcb6e;
+      --shadow: rgba(0, 0, 0, 0.1);
     }
     html,body{height:100%; margin:0; padding:0;}
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--ink);}
@@ -30,18 +39,20 @@
       min-width:320px;
       max-width:400px;
       background:var(--panel);
-      border-right:1px solid #1f2733;
+      border-right:1px solid rgba(116, 185, 255, 0.3);
       display:flex;
       flex-direction:column;
-      box-shadow:2px 0 10px rgba(0,0,0,.3);
+      box-shadow:2px 0 20px var(--shadow);
       z-index:1000;
       overflow-y:auto;
+      backdrop-filter: blur(10px);
     }
     
     .sidebar-header{
       padding:20px;
-      border-bottom:1px solid #1f2733;
+      border-bottom:1px solid rgba(116, 185, 255, 0.2);
       flex-shrink:0;
+      background: linear-gradient(135deg, rgba(116, 185, 255, 0.1) 0%, rgba(253, 121, 168, 0.1) 100%);
     }
     
     .sidebar-header h1{
@@ -49,6 +60,10 @@
       margin:0 0 8px 0;
       font-weight:800;
       letter-spacing:.2px;
+      background: linear-gradient(135deg, var(--playground-blue) 0%, var(--accent2) 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
     
     .sidebar-content{
@@ -75,13 +90,21 @@
     }
     
     .controls select{
-      background:#0e141d;
-      border:1px solid #273143;
+      background: white;
+      border:2px solid rgba(116, 185, 255, 0.3);
       color:var(--ink);
       padding:12px;
-      border-radius:8px;
+      border-radius:12px;
       font-size:14px;
       width:100%;
+      box-shadow: 0 2px 10px var(--shadow);
+      transition: all 0.2s ease;
+    }
+    
+    .controls select:focus{
+      border-color: var(--playground-blue);
+      box-shadow: 0 2px 15px rgba(116, 185, 255, 0.3);
+      outline: none;
     }
     
     .button-group{
@@ -93,30 +116,82 @@
     
     button{
       cursor:pointer;
-      background:linear-gradient(180deg,var(--accent),#3bb4a9);
-      color:#071019;
+      background:linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      color: white;
       border:0;
-      border-radius:8px;
-      padding:12px 16px;
-      font-weight:700;
+      border-radius:25px;
+      padding:12px 20px;
+      font-weight:600;
       font-size:14px;
-      transition:transform 0.1s;
+      transition: all 0.2s ease;
       width:100%;
+      box-shadow: 0 4px 15px rgba(225, 112, 85, 0.3);
     }
     
-    button:hover{transform:translateY(-1px);}
-    button.secondary{background:#192230;color:var(--ink);border:1px solid #2a3547}
-    button.danger{background:#6b2e2e;color:#ffdede;}
+    button:hover{
+      transform:translateY(-2px);
+      box-shadow: 0 6px 20px rgba(225, 112, 85, 0.4);
+    }
+    button.secondary{
+      background: white;
+      color: var(--ink);
+      border: 2px solid rgba(116, 185, 255, 0.3);
+      box-shadow: 0 2px 10px var(--shadow);
+    }
+    button.secondary:hover{
+      border-color: var(--playground-blue);
+      box-shadow: 0 4px 15px rgba(116, 185, 255, 0.3);
+    }
+    button.danger{
+      background: linear-gradient(135deg, var(--bad) 0%, #fd79a8 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(232, 67, 147, 0.3);
+    }
     
     .count{
       color:var(--muted);
       font-size:14px;
       text-align:center;
       padding:16px 20px;
-      border-top:1px solid #1f2733;
-      background:rgba(0,0,0,.2);
+      border-top:1px solid rgba(116, 185, 255, 0.2);
+      background: linear-gradient(135deg, rgba(116, 185, 255, 0.05) 0%, rgba(253, 121, 168, 0.05) 100%);
       margin-top:auto;
       flex-shrink:0;
+      backdrop-filter: blur(5px);
+    }
+    
+    /* Fun checkbox styling */
+    input[type="checkbox"] {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--playground-blue);
+      border-radius: 6px;
+      position: relative;
+      cursor: pointer;
+      background: white;
+      transition: all 0.2s ease;
+    }
+    
+    input[type="checkbox"]:checked {
+      background: linear-gradient(135deg, var(--playground-blue) 0%, var(--accent2) 100%);
+      border-color: var(--playground-blue);
+      transform: scale(1.1);
+    }
+    
+    input[type="checkbox"]:checked::after {
+      content: '✓';
+      position: absolute;
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+      top: -2px;
+      left: 2px;
+    }
+    
+    input[type="checkbox"]:hover {
+      border-color: var(--accent2);
+      box-shadow: 0 0 10px rgba(116, 185, 255, 0.3);
     }
     
     /* Map Container */
@@ -447,6 +522,10 @@
       
       <div class="sidebar-content" id="sidebar-content">
         <div class="controls">
+          <div id="playgroundCount" style="font-size: 14px; color: var(--ink); margin-bottom: 16px; padding: 12px; background: linear-gradient(135deg, var(--playground-yellow) 0%, var(--playground-blue) 100%); border-radius: 20px; text-align: center; border: none; box-shadow: 0 4px 15px rgba(116, 185, 255, 0.2); font-weight: 600;">
+            🏗️ Loading playgrounds...
+          </div>
+          
           <div class="control-group">
             <label for="borough">Borough</label>
             <select id="borough">
@@ -1982,6 +2061,18 @@
       // Clear existing markers
       state.markerClusterGroup.clearLayers();
       state.markers = [];
+
+      // Update playground count display
+      const countEl = qs('playgroundCount');
+      if (countEl) {
+        const total = state.playgrounds.length;
+        const filtered = state.filteredPlaygrounds.length;
+        if (filtered === total) {
+          countEl.textContent = `🎮 Showing all ${total} playgrounds`;
+        } else {
+          countEl.textContent = `🎯 Showing ${filtered} of ${total} playgrounds`;
+        }
+      }
 
       state.filteredPlaygrounds.forEach(playground => {
         const lat = parseFloat(playground.lat);
